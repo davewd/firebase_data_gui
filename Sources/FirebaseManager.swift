@@ -49,7 +49,7 @@ class FirebaseManager: ObservableObject {
             // Note: This implementation uses public read access to the Firebase Realtime Database.
             // For production use, implement OAuth 2.0 token generation from the service account
             // credentials to authenticate requests.
-            guard serviceAccount?.projectId != nil else {
+            guard !databaseURL.isEmpty else {
                 throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "No project ID"])
             }
             
