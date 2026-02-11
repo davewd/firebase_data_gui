@@ -10,7 +10,7 @@ struct ErrorReporter {
         details: String? = nil,
         underlying: Error? = nil
     ) -> String {
-        let errorId = UUID().uuidString
+        let errorId = "ERR-\(UUID().uuidString.prefix(8))"
         var detailParts: [String] = []
         if let details = details, !details.isEmpty {
             detailParts.append(details)
