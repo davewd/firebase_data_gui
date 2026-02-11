@@ -127,7 +127,6 @@ struct OnboardingView: View {
             }
             
             // Validate service account and initialize Firebase
-            let manager = FirebaseManager()
             guard let projectId = json["project_id"] as? String,
                   let privateKey = json["private_key"] as? String,
                   let clientEmail = json["client_email"] as? String else {
@@ -135,6 +134,7 @@ struct OnboardingView: View {
                 isLoading = false
                 return
             }
+            let manager = FirebaseManager()
             let rawDatabaseURL = json["database_url"] as? String
             let databaseURL: String?
             if let rawDatabaseURL, !rawDatabaseURL.isEmpty {
