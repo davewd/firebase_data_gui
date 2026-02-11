@@ -135,18 +135,14 @@ struct OnboardingView: View {
                 return
             }
             let manager = FirebaseManager()
-            let rawDatabaseURL = json["database_url"] as? String
-            let databaseURL: String?
-            if let rawDatabaseURL, !rawDatabaseURL.isEmpty {
-                databaseURL = rawDatabaseURL
-            } else {
-                databaseURL = nil
-            }
+            let databaseURL = (json["database_url"] as? String)?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let normalizedDatabaseURL = databaseURL?.isEmpty == false ? databaseURL : nil
             let serviceAccount = FirebaseManager.ServiceAccount(
                 projectId: projectId,
                 privateKey: privateKey,
                 clientEmail: clientEmail,
-                databaseURL: databaseURL
+                databaseURL: normalizedDatabaseURL
             )
             do {
                 try manager.initialize(with: serviceAccount)

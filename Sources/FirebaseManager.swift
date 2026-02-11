@@ -7,6 +7,7 @@ class FirebaseManager: ObservableObject {
     @Published var error: String?
     
     private var serviceAccount: ServiceAccount?
+    private static let trimmedCharacters = CharacterSet.whitespacesAndNewlines
     
     struct ServiceAccount: Codable {
         let projectId: String
@@ -33,11 +34,10 @@ class FirebaseManager: ObservableObject {
     /// - Parameter serviceAccount: A validated service account model.
     /// - Throws: An error if required fields are empty.
     internal func initialize(with serviceAccount: ServiceAccount) throws {
-        let trimmedCharacters = CharacterSet.whitespacesAndNewlines
         let requiredFields = [
-            ("project ID", serviceAccount.projectId.trimmingCharacters(in: trimmedCharacters)),
-            ("private key", serviceAccount.privateKey.trimmingCharacters(in: trimmedCharacters)),
-            ("client email", serviceAccount.clientEmail.trimmingCharacters(in: trimmedCharacters))
+            ("project ID", serviceAccount.projectId.trimmingCharacters(in: Self.trimmedCharacters)),
+            ("private key", serviceAccount.privateKey.trimmingCharacters(in: Self.trimmedCharacters)),
+            ("client email", serviceAccount.clientEmail.trimmingCharacters(in: Self.trimmedCharacters))
         ]
         let missingFields = requiredFields.filter { $0.1.isEmpty }.map { $0.0 }
         if !missingFields.isEmpty {
@@ -71,13 +71,13 @@ class FirebaseManager: ObservableObject {
             // Note: This implementation uses public read access to the Firebase Realtime Database.
             // For production use, implement OAuth 2.0 token generation from the service account
             // credentials to authenticate requests.
-            let baseURL = databaseURL
-            guard !baseURL.isEmpty else {
+            let resolvedDatabaseURL = databaseURL
+            guard !resolvedDatabaseURL.isEmpty else {
                 throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unable to construct database URL from configuration"])
             }
             
             // Construct the URL to fetch root data (limited via shallow query)
-            let urlString = "\(baseURL)/.json?shallow=true"
+            let urlString = "\(resolvedDatabaseURL)/.json?shallow=true"
             guard let url = URL(string: urlString) else {
                 throw NSError(domain: "FirebaseDataGUI", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
             }
