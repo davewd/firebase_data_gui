@@ -147,9 +147,15 @@ struct OnboardingView: View {
                 clientEmail: clientEmail,
                 databaseURL: databaseURL
             )
-            manager.initialize(with: serviceAccount)
-            appState.firebaseManager = manager
-            appState.isAuthenticated = true
+            do {
+                try manager.initialize(with: serviceAccount)
+                appState.firebaseManager = manager
+                appState.isAuthenticated = true
+            } catch {
+                errorMessage = "Error: Failed to initialize Firebase - \(error.localizedDescription)"
+                isLoading = false
+                return
+            }
             
         } catch {
             errorMessage = "Error: Failed to read file - \(error.localizedDescription)"
