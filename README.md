@@ -114,7 +114,7 @@ Use the **Error ID** to correlate the UI message with logs for deeper troublesho
 ### Viewing Detailed Logs
 
 - **From Xcode**: Run the app and open the Debug area (⇧⌘Y) to see log output.
-- **From the built app**: Open **Console.app** on macOS and search for `subsystem:FirebaseDataGUI category:Errors`.
+- **From the built app**: Open **Console.app** on macOS and search for `subsystem:FirebaseDataGUI AND category:Errors`.
 
 If you file an issue, include the entire error message block shown in the UI (Error ID, Type, Resolution, and Details).
 
