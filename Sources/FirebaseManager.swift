@@ -7,8 +7,6 @@ class FirebaseManager: ObservableObject {
     @Published var error: String?
     
     private var serviceAccount: ServiceAccount?
-    private var accessToken: String?
-    private var tokenExpiry: Date?
     
     struct ServiceAccount: Codable {
         let projectId: String
@@ -48,8 +46,9 @@ class FirebaseManager: ObservableObject {
         }
         
         do {
-            // For simplicity with service accounts, we'll use the REST API with auth=<access_token>
-            // In a real implementation, you'd generate a proper JWT token
+            // Note: This implementation uses public read access to the Firebase Realtime Database.
+            // For production use, implement OAuth 2.0 token generation from the service account
+            // credentials to authenticate requests.
             guard let projectId = serviceAccount?.projectId else {
                 throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "No project ID"])
             }

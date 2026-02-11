@@ -107,6 +107,22 @@ firebase_data_gui/
 - The app does not store or transmit your keys anywhere
 - Keys are only used locally to authenticate with Firebase
 
+## Firebase Security Rules
+
+For the app to work, your Firebase Realtime Database needs read access configured. The current implementation uses the REST API without OAuth authentication, so you need to allow read access:
+
+**Public Read (Development/Testing)**
+```json
+{
+  "rules": {
+    ".read": true,
+    ".write": false
+  }
+}
+```
+
+**Note:** For production use with sensitive data, you may want to implement OAuth 2.0 token generation from the service account credentials. The current implementation prioritizes simplicity and is suitable for development databases or public read-only data.
+
 ## Troubleshooting
 
 ### "Invalid Firebase service account key format"

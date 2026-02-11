@@ -130,10 +130,17 @@ struct OnboardingView: View {
             
             // Initialize Firebase
             let manager = FirebaseManager()
-            try manager.initialize(with: url)
-            
-            appState.firebaseManager = manager
-            appState.isAuthenticated = true
+            do {
+                try manager.initialize(with: url)
+                appState.firebaseManager = manager
+                appState.isAuthenticated = true
+            } catch {
+                throw NSError(
+                    domain: "FirebaseDataGUI",
+                    code: 2,
+                    userInfo: [NSLocalizedDescriptionKey: "Failed to initialize Firebase: \(error.localizedDescription)"]
+                )
+            }
             
         } catch {
             errorMessage = "Error: \(error.localizedDescription)"

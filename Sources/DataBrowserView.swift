@@ -231,12 +231,12 @@ struct DataRowView: View {
     
     private var valuePreview: String {
         switch value {
-        case let string as String:
-            return "\"\(string)\""
-        case let number as NSNumber:
-            return "\(number)"
         case let bool as Bool:
             return "\(bool)"
+        case let number as NSNumber:
+            return "\(number)"
+        case let string as String:
+            return "\"\(string)\""
         case is NSNull:
             return "null"
         case let array as [Any]:
@@ -250,12 +250,12 @@ struct DataRowView: View {
     
     private var valueColor: Color {
         switch value {
-        case is String:
-            return .green
-        case is NSNumber:
-            return .orange
         case is Bool:
             return .purple
+        case is NSNumber:
+            return .orange
+        case is String:
+            return .green
         case is NSNull:
             return .gray
         default:
