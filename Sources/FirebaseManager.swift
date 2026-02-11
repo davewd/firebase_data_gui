@@ -8,6 +8,7 @@ class FirebaseManager: ObservableObject {
     
     private var serviceAccount: ServiceAccount?
     private static let trimmedCharacters = CharacterSet.whitespacesAndNewlines
+    private static let unknownStatusCode = -1
     
     struct ServiceAccount: Codable {
         let projectId: String
@@ -89,7 +90,15 @@ class FirebaseManager: ObservableObject {
             
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
-                throw NSError(domain: "FirebaseDataGUI", code: 3, userInfo: [NSLocalizedDescriptionKey: "Failed to fetch data"])
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? Self.unknownStatusCode
+                throw NSError(
+                    domain: "FirebaseDataGUI",
+                    code: 3,
+                    userInfo: [
+                        NSLocalizedDescriptionKey: "Received HTTP status \(statusCode).",
+                        "HTTPStatusCode": statusCode
+                    ]
+                )
             }
             
             if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
@@ -114,7 +123,11 @@ class FirebaseManager: ObservableObject {
             }
         } catch {
             await MainActor.run {
-                self.error = "Failed to fetch data: \(error.localizedDescription)"
+                self.error = ErrorReporter.userMessage(
+                    errorType: "Database Fetch Failed",
+                    resolution: "Confirm your database URL and security rules allow public read access, then try again.",
+                    underlying: error
+                )
             }
         }
         
@@ -141,7 +154,12 @@ class FirebaseManager: ObservableObject {
             return try JSONSerialization.jsonObject(with: data)
         } catch {
             await MainActor.run {
-                self.error = "Failed to fetch data at \(path): \(error.localizedDescription)"
+                self.error = ErrorReporter.userMessage(
+                    errorType: "Data Fetch Failed",
+                    resolution: "Verify the selected path exists and your database allows public reads.",
+                    details: "Path: \(path)",
+                    underlying: error
+                )
             }
             return nil
         }
