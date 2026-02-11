@@ -30,13 +30,21 @@ class FirebaseManager: ObservableObject {
     }
 
     func initialize(with serviceAccount: ServiceAccount) throws {
-        guard !serviceAccount.projectId.isEmpty,
-              !serviceAccount.privateKey.isEmpty,
-              !serviceAccount.clientEmail.isEmpty else {
+        var missingFields: [String] = []
+        if serviceAccount.projectId.isEmpty {
+            missingFields.append("projectId")
+        }
+        if serviceAccount.privateKey.isEmpty {
+            missingFields.append("privateKey")
+        }
+        if serviceAccount.clientEmail.isEmpty {
+            missingFields.append("clientEmail")
+        }
+        if !missingFields.isEmpty {
             throw NSError(
                 domain: "FirebaseDataGUI",
                 code: 1,
-                userInfo: [NSLocalizedDescriptionKey: "Service account data contains empty required fields (projectId, privateKey, clientEmail)"]
+                userInfo: [NSLocalizedDescriptionKey: "Service account data missing required fields: \(missingFields.joined(separator: ", "))"]
             )
         }
         self.serviceAccount = serviceAccount
@@ -65,7 +73,7 @@ class FirebaseManager: ObservableObject {
             // credentials to authenticate requests.
             let baseURL = databaseURL
             guard !baseURL.isEmpty else {
-                throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unable to determine database URL (no explicit URL or project ID provided)"])
+                throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unable to construct database URL from configuration"])
             }
             
             // Construct the URL to fetch root data (limited via shallow query)
