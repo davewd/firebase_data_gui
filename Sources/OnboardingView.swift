@@ -127,9 +127,8 @@ struct OnboardingView: View {
             }
             
             // Validate it's a Firebase service account key
-            guard json["project_id"] is String,
-                  json["private_key"] is String,
-                  json["client_email"] is String else {
+            let requiredKeys = ["project_id", "private_key", "client_email"]
+            guard requiredKeys.allSatisfy({ (json[$0] as? String)?.isEmpty == false }) else {
                 errorMessage = "Error: Invalid Firebase service account key format. Missing required fields."
                 isLoading = false
                 return
