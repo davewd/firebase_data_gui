@@ -17,7 +17,7 @@ struct ErrorReporter {
         underlying: Error? = nil
     ) -> String {
         let timestamp = dateFormatter.string(from: Date())
-        let suffix = UUID().uuidString.prefix(4)
+        let suffix = UUID().uuidString.prefix(8)
         let errorId = "ERR-\(timestamp)-\(suffix)"
         var detailParts: [String] = []
         if let details = details, !details.isEmpty {
@@ -26,7 +26,7 @@ struct ErrorReporter {
         if let underlying = underlying {
             detailParts.append(underlying.localizedDescription)
         }
-        let detailText = detailParts.isEmpty ? "See logs for additional details." : detailParts.joined(separator: " | ")
+        let detailText = detailParts.isEmpty ? "No additional details were available." : detailParts.joined(separator: " | ")
         
         logger.error(
             "ErrorID: \(errorId, privacy: .public) | Type: \(errorType, privacy: .public) | Resolution: \(resolution, privacy: .public) | Details: \(detailText, privacy: .public)"
