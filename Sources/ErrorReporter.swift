@@ -5,13 +5,7 @@ struct ErrorReporter {
     private static let logger = Logger(subsystem: "FirebaseDataGUI", category: "Errors")
     private static let dateFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [
-            .withFullDate,
-            .withTime,
-            .withTimeZone,
-            .withDashSeparatorInDate,
-            .withColonSeparatorInTime
-        ]
+        formatter.formatOptions = [.withFullDate, .withTime, .withDashSeparatorInDate, .withColonSeparatorInTime]
         return formatter
     }()
     
@@ -21,7 +15,11 @@ struct ErrorReporter {
         details: String? = nil,
         underlying: Error? = nil
     ) -> String {
-        let timestamp = dateFormatter.string(from: Date())
+        let rawTimestamp = dateFormatter.string(from: Date())
+        let timestamp = rawTimestamp
+            .replacingOccurrences(of: "-", with: "")
+            .replacingOccurrences(of: ":", with: "")
+            .replacingOccurrences(of: "T", with: "")
         let suffix = String(UUID().uuidString.prefix(8))
         let errorId = "ERR-\(timestamp)-\(suffix)"
         var detailParts: [String] = []

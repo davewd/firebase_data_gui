@@ -8,6 +8,7 @@ class FirebaseManager: ObservableObject {
     
     private var serviceAccount: ServiceAccount?
     private static let trimmedCharacters = CharacterSet.whitespacesAndNewlines
+    private static let unknownStatusCode = -1
     
     struct ServiceAccount: Codable {
         let projectId: String
@@ -89,7 +90,7 @@ class FirebaseManager: ObservableObject {
             
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
-                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? Self.unknownStatusCode
                 throw NSError(
                     domain: "FirebaseDataGUI",
                     code: 3,
