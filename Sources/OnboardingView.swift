@@ -140,7 +140,8 @@ struct OnboardingView: View {
             
             // Initialize Firebase
             let manager = FirebaseManager()
-            let databaseURL = json["database_url"] as? String
+            let databaseURLKey = FirebaseManager.ServiceAccount.CodingKeys.databaseURL.stringValue
+            let databaseURL = json[databaseURLKey] as? String
             let serviceAccount = FirebaseManager.ServiceAccount(
                 projectId: projectId,
                 privateKey: privateKey,

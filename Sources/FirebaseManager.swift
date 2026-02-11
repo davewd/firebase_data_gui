@@ -33,7 +33,11 @@ class FirebaseManager: ObservableObject {
         guard !serviceAccount.projectId.isEmpty,
               !serviceAccount.privateKey.isEmpty,
               !serviceAccount.clientEmail.isEmpty else {
-            throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid service account data"])
+            throw NSError(
+                domain: "FirebaseDataGUI",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Service account data contains empty required fields (projectId, privateKey, clientEmail)"]
+            )
         }
         self.serviceAccount = serviceAccount
     }
@@ -61,7 +65,7 @@ class FirebaseManager: ObservableObject {
             // credentials to authenticate requests.
             let baseURL = databaseURL
             guard !baseURL.isEmpty else {
-                throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing database URL and project ID in configuration"])
+                throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unable to determine database URL (no explicit URL or project ID provided)"])
             }
             
             // Construct the URL to fetch root data (limited via shallow query)
