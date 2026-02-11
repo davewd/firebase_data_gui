@@ -95,7 +95,6 @@ struct OnboardingView: View {
                     self.errorMessage = ErrorReporter.userMessage(
                         errorType: "File Load Failed",
                         resolution: "Select a valid JSON service account key file and try again.",
-                        details: error?.localizedDescription,
                         underlying: error
                     )
                 }
@@ -167,7 +166,6 @@ struct OnboardingView: View {
                 errorMessage = ErrorReporter.userMessage(
                     errorType: "Service Account Validation Failed",
                     resolution: "Verify the service account key values are present and not empty.",
-                    details: error.localizedDescription,
                     underlying: error
                 )
                 isLoading = false
@@ -178,7 +176,6 @@ struct OnboardingView: View {
             errorMessage = ErrorReporter.userMessage(
                 errorType: "File Read Failed",
                 resolution: "Ensure the JSON file is accessible and try again.",
-                details: error.localizedDescription,
                 underlying: error
             )
         }

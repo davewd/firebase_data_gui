@@ -122,7 +122,6 @@ class FirebaseManager: ObservableObject {
                 self.error = ErrorReporter.userMessage(
                     errorType: "Database Fetch Failed",
                     resolution: "Confirm your database URL and security rules allow public read access, then try again.",
-                    details: error.localizedDescription,
                     underlying: error
                 )
             }
@@ -154,7 +153,7 @@ class FirebaseManager: ObservableObject {
                 self.error = ErrorReporter.userMessage(
                     errorType: "Data Fetch Failed",
                     resolution: "Verify the selected path exists and your database allows public reads.",
-                    details: "Path: \(path). \(error.localizedDescription)",
+                    details: "Path: \(path)",
                     underlying: error
                 )
             }
