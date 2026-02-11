@@ -65,14 +65,23 @@ struct OnboardingView: View {
             }
             
             if let error = errorMessage {
-                Text(error)
-                    .foregroundColor(.red)
-                    .font(.caption)
-                    .multilineTextAlignment(.leading)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding()
-                    .background(Color.red.opacity(0.1))
-                    .cornerRadius(8)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(error)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Button(action: {
+                        copyTextToClipboard(error)
+                    }) {
+                        Label("Copy Error", systemImage: "doc.on.doc")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
+                }
+                .padding()
+                .background(Color.red.opacity(0.1))
+                .cornerRadius(8)
             }
             
             Spacer()

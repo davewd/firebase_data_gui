@@ -109,7 +109,7 @@ struct DataContentView: View {
                     Spacer()
                 }
             } else if let error = manager.error {
-                VStack {
+                VStack(spacing: 12) {
                     Spacer()
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 40))
@@ -119,6 +119,13 @@ struct DataContentView: View {
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding()
+                    Button(action: {
+                        copyTextToClipboard(error)
+                    }) {
+                        Label("Copy Error", systemImage: "doc.on.doc")
+                            .font(.caption)
+                    }
+                    .buttonStyle(.bordered)
                     Spacer()
                 }
             } else {
