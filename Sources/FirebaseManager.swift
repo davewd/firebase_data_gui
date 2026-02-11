@@ -29,7 +29,7 @@ class FirebaseManager: ObservableObject {
     }
     
     private var databaseURL: String {
-        if let url = serviceAccount?.databaseURL {
+        if let url = serviceAccount?.databaseURL, !url.isEmpty {
             return url
         }
         // Default database URL format
@@ -49,12 +49,17 @@ class FirebaseManager: ObservableObject {
             // Note: This implementation uses public read access to the Firebase Realtime Database.
             // For production use, implement OAuth 2.0 token generation from the service account
             // credentials to authenticate requests.
-            guard !databaseURL.isEmpty else {
-                throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "No database URL"])
+            let baseURL: String
+            if let databaseURL = serviceAccount?.databaseURL, !databaseURL.isEmpty {
+                baseURL = databaseURL
+            } else if let projectId = serviceAccount?.projectId {
+                baseURL = "https://\(projectId)-default-rtdb.firebaseio.com"
+            } else {
+                throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing database URL or project ID"])
             }
             
             // Construct the URL to fetch root data (limited via shallow query)
-            let urlString = "\(databaseURL)/.json?shallow=true"
+            let urlString = "\(baseURL)/.json?shallow=true"
             guard let url = URL(string: urlString) else {
                 throw NSError(domain: "FirebaseDataGUI", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
             }
