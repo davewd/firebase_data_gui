@@ -49,12 +49,8 @@ class FirebaseManager: ObservableObject {
             // Note: This implementation uses public read access to the Firebase Realtime Database.
             // For production use, implement OAuth 2.0 token generation from the service account
             // credentials to authenticate requests.
-            let baseURL: String
-            if let databaseURL = serviceAccount?.databaseURL, !databaseURL.isEmpty {
-                baseURL = databaseURL
-            } else if let projectId = serviceAccount?.projectId {
-                baseURL = "https://\(projectId)-default-rtdb.firebaseio.com"
-            } else {
+            let baseURL = databaseURL
+            guard !baseURL.isEmpty else {
                 throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "No valid database URL or project ID available"])
             }
             
