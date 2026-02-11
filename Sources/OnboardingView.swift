@@ -18,6 +18,11 @@ struct OnboardingView: View {
                 .font(.title3)
                 .foregroundColor(.secondary)
             
+            Text("Note: Your database must allow public read access")
+                .font(.caption)
+                .foregroundColor(.orange)
+                .padding(.top, 4)
+            
             // Drop zone
             ZStack {
                 RoundedRectangle(cornerRadius: 16)
@@ -115,17 +120,19 @@ struct OnboardingView: View {
         
         do {
             let data = try Data(contentsOf: url)
-            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                errorMessage = "Error: Invalid JSON format"
+                isLoading = false
+                return
+            }
             
             // Validate it's a Firebase service account key
-            guard let projectId = json?["project_id"] as? String,
-                  let privateKey = json?["private_key"] as? String,
-                  let clientEmail = json?["client_email"] as? String else {
-                throw NSError(
-                    domain: "FirebaseDataGUI",
-                    code: 1,
-                    userInfo: [NSLocalizedDescriptionKey: "Invalid Firebase service account key format"]
-                )
+            guard let projectId = json["project_id"] as? String,
+                  let privateKey = json["private_key"] as? String,
+                  let clientEmail = json["client_email"] as? String else {
+                errorMessage = "Error: Invalid Firebase service account key format. Missing required fields."
+                isLoading = false
+                return
             }
             
             // Initialize Firebase
@@ -135,15 +142,13 @@ struct OnboardingView: View {
                 appState.firebaseManager = manager
                 appState.isAuthenticated = true
             } catch {
-                throw NSError(
-                    domain: "FirebaseDataGUI",
-                    code: 2,
-                    userInfo: [NSLocalizedDescriptionKey: "Failed to initialize Firebase: \(error.localizedDescription)"]
-                )
+                errorMessage = "Error: Failed to initialize Firebase - \(error.localizedDescription)"
+                isLoading = false
+                return
             }
             
         } catch {
-            errorMessage = "Error: \(error.localizedDescription)"
+            errorMessage = "Error: Failed to read file - \(error.localizedDescription)"
         }
         
         isLoading = false

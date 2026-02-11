@@ -4,12 +4,35 @@ A simple macOS application for viewing Firebase Realtime Database data in a read
 
 ## Features
 
-- 🔥 **Firebase Integration**: Connects to Firebase Realtime Database using service account credentials
+- 🔥 **Firebase Integration**: Connects to Firebase Realtime Database using REST API
 - 🎯 **Drag & Drop**: Simple onboarding - just drop your service account JSON key file
 - 📊 **Nested Data View**: Browse JSON object-oriented database with expandable tree structure
 - ⚡ **Limited Download**: Fetches only the first 5 entries per collection to save bandwidth
 - 🔒 **Read-Only**: Safe browsing without risk of modifying your data
 - 💻 **Native macOS**: Built with SwiftUI for a modern, native macOS experience
+
+## Important: Firebase Security Rules
+
+⚠️ **This app requires your Firebase Realtime Database to have public read access configured.**
+
+The current implementation uses Firebase's REST API without OAuth authentication for simplicity. Your database security rules must allow unauthenticated read access:
+
+```json
+{
+  "rules": {
+    ".read": true,
+    ".write": false
+  }
+}
+```
+
+**For production databases with sensitive data**, this approach is not recommended. The service account key is validated but not currently used for authentication. Future versions may implement OAuth 2.0 token generation for authenticated access.
+
+**Recommended Use Cases:**
+- Development/staging databases
+- Public read-only data
+- Non-sensitive data
+- Database structure inspection
 
 ## Requirements
 
