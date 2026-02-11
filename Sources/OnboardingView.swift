@@ -126,7 +126,7 @@ struct OnboardingView: View {
                 return
             }
             
-            // Initialize Firebase
+            // Validate service account and initialize Firebase
             let manager = FirebaseManager()
             guard let projectId = json["project_id"] as? String,
                   let privateKey = json["private_key"] as? String,

@@ -33,16 +33,12 @@ class FirebaseManager: ObservableObject {
     /// - Parameter serviceAccount: A validated service account model.
     /// - Throws: An error if required fields are empty.
     internal func initialize(with serviceAccount: ServiceAccount) throws {
-        var missingFields: [String] = []
-        if serviceAccount.projectId.isEmpty {
-            missingFields.append("project ID")
-        }
-        if serviceAccount.privateKey.isEmpty {
-            missingFields.append("private key")
-        }
-        if serviceAccount.clientEmail.isEmpty {
-            missingFields.append("client email")
-        }
+        let requiredFields = [
+            ("project ID", serviceAccount.projectId),
+            ("private key", serviceAccount.privateKey),
+            ("client email", serviceAccount.clientEmail)
+        ]
+        let missingFields = requiredFields.filter { $0.1.isEmpty }.map { $0.0 }
         if !missingFields.isEmpty {
             throw NSError(
                 domain: "FirebaseDataGUI",
