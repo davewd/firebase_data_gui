@@ -92,8 +92,11 @@ class FirebaseManager: ObservableObject {
                 let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
                 throw NSError(
                     domain: "FirebaseDataGUI",
-                    code: statusCode,
-                    userInfo: [NSLocalizedDescriptionKey: "Received HTTP status \(statusCode)."]
+                    code: 3,
+                    userInfo: [
+                        NSLocalizedDescriptionKey: "Received HTTP status \(statusCode).",
+                        "HTTPStatusCode": statusCode
+                    ]
                 )
             }
             

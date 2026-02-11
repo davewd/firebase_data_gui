@@ -6,7 +6,7 @@ struct ErrorReporter {
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        formatter.dateFormat = "yyyyMMdd-HH-mm-ss"
         return formatter
     }()
     
@@ -17,7 +17,7 @@ struct ErrorReporter {
         underlying: Error? = nil
     ) -> String {
         let timestamp = dateFormatter.string(from: Date())
-        let suffix = UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(8)
+        let suffix = UUID().uuidString.prefix(8)
         let errorId = "ERR-\(timestamp)-\(suffix)"
         var detailParts: [String] = []
         if let details = details, !details.isEmpty {
