@@ -35,13 +35,13 @@ class FirebaseManager: ObservableObject {
     internal func initialize(with serviceAccount: ServiceAccount) throws {
         var missingFields: [String] = []
         if serviceAccount.projectId.isEmpty {
-            missingFields.append("projectId")
+            missingFields.append("project ID")
         }
         if serviceAccount.privateKey.isEmpty {
-            missingFields.append("privateKey")
+            missingFields.append("private key")
         }
         if serviceAccount.clientEmail.isEmpty {
-            missingFields.append("clientEmail")
+            missingFields.append("client email")
         }
         if !missingFields.isEmpty {
             throw NSError(

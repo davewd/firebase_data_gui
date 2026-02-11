@@ -128,9 +128,13 @@ struct OnboardingView: View {
             
             // Initialize Firebase
             let manager = FirebaseManager()
-            let projectId = json["project_id"] as? String ?? ""
-            let privateKey = json["private_key"] as? String ?? ""
-            let clientEmail = json["client_email"] as? String ?? ""
+            guard let projectId = json["project_id"] as? String,
+                  let privateKey = json["private_key"] as? String,
+                  let clientEmail = json["client_email"] as? String else {
+                errorMessage = "Error: Invalid Firebase service account key format. Missing required fields."
+                isLoading = false
+                return
+            }
             let rawDatabaseURL = json["database_url"] as? String
             let databaseURL: String?
             if let rawDatabaseURL, !rawDatabaseURL.isEmpty {
