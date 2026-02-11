@@ -12,6 +12,8 @@ class FirebaseManager: ObservableObject {
     private static let unknownStatusCode = -1
     private static let tokenEndpoint = "https://oauth2.googleapis.com/token"
     private static let tokenScope = "https://www.googleapis.com/auth/firebase.database https://www.googleapis.com/auth/userinfo.email"
+    private static let tokenExpiryBufferSeconds: TimeInterval = 60
+    private static let jwtExpirationSeconds = 3600
     
     struct ServiceAccount: Codable {
         let projectId: String
@@ -176,7 +178,7 @@ class FirebaseManager: ObservableObject {
     }
 
     private func accessToken() async throws -> String {
-        if let cachedToken, cachedToken.expiry > Date().addingTimeInterval(60) {
+        if let cachedToken, cachedToken.expiry > Date().addingTimeInterval(Self.tokenExpiryBufferSeconds) {
             return cachedToken.value
         }
         guard let serviceAccount else {
@@ -213,6 +215,9 @@ class FirebaseManager: ObservableObject {
         }
 
         let tokenResponse = try JSONDecoder().decode(OAuthTokenResponse.self, from: data)
+        guard tokenResponse.expiresIn > 0 else {
+            throw NSError(domain: "FirebaseDataGUI", code: 11, userInfo: [NSLocalizedDescriptionKey: "Token response did not include a valid expiry."])
+        }
         let expiry = Date().addingTimeInterval(tokenResponse.expiresIn)
         let token = OAuthToken(value: tokenResponse.accessToken, expiry: expiry)
         cachedToken = token
@@ -232,7 +237,7 @@ class FirebaseManager: ObservableObject {
     private func makeSignedJWT(from account: ServiceAccount) throws -> String {
         let header: [String: String] = ["alg": "RS256", "typ": "JWT"]
         let issuedAt = Int(Date().timeIntervalSince1970)
-        let expiration = issuedAt + 3600
+        let expiration = issuedAt + Self.jwtExpirationSeconds
         let claims: [String: Any] = [
             "iss": account.clientEmail,
             "scope": Self.tokenScope,
