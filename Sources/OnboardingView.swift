@@ -127,14 +127,12 @@ struct OnboardingView: View {
             }
             
             // Validate it's a Firebase service account key
-            let requiredKeys = ["project_id", "private_key", "client_email"]
-            let hasRequiredKeys = requiredKeys.allSatisfy { key in
-                guard let value = json[key] as? String else {
-                    return false
-                }
-                return !value.isEmpty
-            }
-            guard hasRequiredKeys else {
+            guard let projectId = json["project_id"] as? String,
+                  !projectId.isEmpty,
+                  let privateKey = json["private_key"] as? String,
+                  !privateKey.isEmpty,
+                  let clientEmail = json["client_email"] as? String,
+                  !clientEmail.isEmpty else {
                 errorMessage = "Error: Invalid Firebase service account key format. Missing required fields."
                 isLoading = false
                 return
@@ -142,15 +140,16 @@ struct OnboardingView: View {
             
             // Initialize Firebase
             let manager = FirebaseManager()
-            do {
-                try manager.initialize(with: url)
-                appState.firebaseManager = manager
-                appState.isAuthenticated = true
-            } catch {
-                errorMessage = "Error: Failed to initialize Firebase - \(error.localizedDescription)"
-                isLoading = false
-                return
-            }
+            let databaseURL = json["database_url"] as? String
+            let serviceAccount = FirebaseManager.ServiceAccount(
+                projectId: projectId,
+                privateKey: privateKey,
+                clientEmail: clientEmail,
+                databaseURL: databaseURL
+            )
+            manager.initialize(with: serviceAccount)
+            appState.firebaseManager = manager
+            appState.isAuthenticated = true
             
         } catch {
             errorMessage = "Error: Failed to read file - \(error.localizedDescription)"

@@ -25,7 +25,12 @@ class FirebaseManager: ObservableObject {
     func initialize(with serviceKeyURL: URL) throws {
         let data = try Data(contentsOf: serviceKeyURL)
         let decoder = JSONDecoder()
-        serviceAccount = try decoder.decode(ServiceAccount.self, from: data)
+        let account = try decoder.decode(ServiceAccount.self, from: data)
+        initialize(with: account)
+    }
+
+    func initialize(with serviceAccount: ServiceAccount) {
+        self.serviceAccount = serviceAccount
     }
     
     private var databaseURL: String {
@@ -51,7 +56,7 @@ class FirebaseManager: ObservableObject {
             // credentials to authenticate requests.
             let baseURL = databaseURL
             guard !baseURL.isEmpty else {
-                throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "No valid database URL or project ID available"])
+                throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "No valid database URL available from configuration"])
             }
             
             // Construct the URL to fetch root data (limited via shallow query)
