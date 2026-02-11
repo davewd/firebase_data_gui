@@ -22,14 +22,14 @@ class FirebaseManager: ObservableObject {
         }
     }
     
-    func initialize(with serviceKeyURL: URL) throws {
+    internal func initialize(with serviceKeyURL: URL) throws {
         let data = try Data(contentsOf: serviceKeyURL)
         let decoder = JSONDecoder()
         let account = try decoder.decode(ServiceAccount.self, from: data)
         initialize(with: account)
     }
 
-    func initialize(with serviceAccount: ServiceAccount) {
+    internal func initialize(with serviceAccount: ServiceAccount) {
         self.serviceAccount = serviceAccount
     }
     
