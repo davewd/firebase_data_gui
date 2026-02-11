@@ -116,6 +116,8 @@ struct DataContentView: View {
                         .foregroundColor(.red)
                     Text(error)
                         .foregroundColor(.red)
+                        .multilineTextAlignment(.leading)
+                        .fixedSize(horizontal: false, vertical: true)
                         .padding()
                     Spacer()
                 }

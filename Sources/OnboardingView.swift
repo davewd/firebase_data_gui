@@ -68,6 +68,8 @@ struct OnboardingView: View {
                 Text(error)
                     .foregroundColor(.red)
                     .font(.caption)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
                     .padding()
                     .background(Color.red.opacity(0.1))
                     .cornerRadius(8)
@@ -90,7 +92,12 @@ struct OnboardingView: View {
         _ = provider.loadObject(ofClass: URL.self) { url, error in
             guard let url = url else {
                 DispatchQueue.main.async {
-                    self.errorMessage = "Failed to load file"
+                    self.errorMessage = ErrorReporter.userMessage(
+                        errorType: "File Load Failed",
+                        resolution: "Select a valid JSON service account key file and try again.",
+                        details: error?.localizedDescription,
+                        underlying: error
+                    )
                 }
                 return
             }
@@ -121,7 +128,11 @@ struct OnboardingView: View {
         do {
             let data = try Data(contentsOf: url)
             guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                errorMessage = "Error: Invalid JSON format"
+                errorMessage = ErrorReporter.userMessage(
+                    errorType: "Invalid JSON Format",
+                    resolution: "Use a Firebase service account JSON key downloaded from the Firebase console.",
+                    details: "The JSON root is not a dictionary."
+                )
                 isLoading = false
                 return
             }
@@ -130,7 +141,11 @@ struct OnboardingView: View {
             guard let projectId = json["project_id"] as? String,
                   let privateKey = json["private_key"] as? String,
                   let clientEmail = json["client_email"] as? String else {
-                errorMessage = "Error: Invalid Firebase service account key format. Missing required fields."
+                errorMessage = ErrorReporter.userMessage(
+                    errorType: "Service Account Missing Fields",
+                    resolution: "Download a new service account key that includes project_id, private_key, and client_email.",
+                    details: "Required fields are missing from the service account JSON."
+                )
                 isLoading = false
                 return
             }
@@ -149,13 +164,23 @@ struct OnboardingView: View {
                 appState.firebaseManager = manager
                 appState.isAuthenticated = true
             } catch {
-                errorMessage = "Error: Invalid Firebase service account key format. \(error.localizedDescription)"
+                errorMessage = ErrorReporter.userMessage(
+                    errorType: "Service Account Validation Failed",
+                    resolution: "Verify the service account key values are present and not empty.",
+                    details: error.localizedDescription,
+                    underlying: error
+                )
                 isLoading = false
                 return
             }
             
         } catch {
-            errorMessage = "Error: Failed to read file - \(error.localizedDescription)"
+            errorMessage = ErrorReporter.userMessage(
+                errorType: "File Read Failed",
+                resolution: "Ensure the JSON file is accessible and try again.",
+                details: error.localizedDescription,
+                underlying: error
+            )
         }
         
         isLoading = false

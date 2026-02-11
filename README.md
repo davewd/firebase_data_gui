@@ -98,6 +98,26 @@ The viewer supports and displays:
 - **Nested objects** (expandable)
 - **Arrays** (with item count)
 
+## Logging & Error Details
+
+When the app hits an error, the UI displays a structured message with:
+
+```
+Error ID: <unique id>
+Error Type: <short category>
+Resolution: <single sentence fix>
+Details: <additional context>
+```
+
+Use the **Error ID** to correlate the UI message with logs for deeper troubleshooting.
+
+### Viewing Detailed Logs
+
+- **From Xcode**: Run the app and open the Debug area (⇧⌘Y) to see log output.
+- **From the built app**: Open **Console.app** on macOS and search for the subsystem **FirebaseDataGUI** with category **Errors**.
+
+If you file an issue, include the Error ID and Details line from the UI message.
+
 ## Project Structure
 
 ```
@@ -184,4 +204,3 @@ This project is open source and available under the MIT License.
 ## Support
 
 For issues, questions, or contributions, please visit the [GitHub repository](https://github.com/davewd/firebase_data_gui).
-

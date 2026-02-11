@@ -89,7 +89,12 @@ class FirebaseManager: ObservableObject {
             
             guard let httpResponse = response as? HTTPURLResponse,
                   httpResponse.statusCode == 200 else {
-                throw NSError(domain: "FirebaseDataGUI", code: 3, userInfo: [NSLocalizedDescriptionKey: "Failed to fetch data"])
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                throw NSError(
+                    domain: "FirebaseDataGUI",
+                    code: statusCode,
+                    userInfo: [NSLocalizedDescriptionKey: "Received HTTP status \(statusCode)."]
+                )
             }
             
             if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
@@ -114,7 +119,12 @@ class FirebaseManager: ObservableObject {
             }
         } catch {
             await MainActor.run {
-                self.error = "Failed to fetch data: \(error.localizedDescription)"
+                self.error = ErrorReporter.userMessage(
+                    errorType: "Database Fetch Failed",
+                    resolution: "Confirm your database URL and security rules allow public read access, then try again.",
+                    details: error.localizedDescription,
+                    underlying: error
+                )
             }
         }
         
@@ -141,7 +151,12 @@ class FirebaseManager: ObservableObject {
             return try JSONSerialization.jsonObject(with: data)
         } catch {
             await MainActor.run {
-                self.error = "Failed to fetch data at \(path): \(error.localizedDescription)"
+                self.error = ErrorReporter.userMessage(
+                    errorType: "Data Fetch Failed",
+                    resolution: "Verify the selected path exists and your database allows public reads.",
+                    details: "Path: \(path). \(error.localizedDescription)",
+                    underlying: error
+                )
             }
             return nil
         }
