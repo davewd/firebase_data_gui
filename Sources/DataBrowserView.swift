@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 
 struct DataBrowserView: View {
@@ -121,7 +120,7 @@ struct DataContentView: View {
                         .fixedSize(horizontal: false, vertical: true)
                         .padding()
                     Button(action: {
-                        copyErrorToClipboard(error)
+                        copyTextToClipboard(error)
                     }) {
                         Label("Copy Error", systemImage: "doc.on.doc")
                             .font(.caption)
@@ -147,12 +146,6 @@ struct DataContentView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-    
-    private func copyErrorToClipboard(_ error: String) {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(error, forType: .string)
     }
 }
 

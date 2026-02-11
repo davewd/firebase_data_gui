@@ -1,4 +1,3 @@
-import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -73,7 +72,7 @@ struct OnboardingView: View {
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                     Button(action: {
-                        copyErrorToClipboard(error)
+                        copyTextToClipboard(error)
                     }) {
                         Label("Copy Error", systemImage: "doc.on.doc")
                             .font(.caption)
@@ -191,12 +190,6 @@ struct OnboardingView: View {
         }
         
         isLoading = false
-    }
-    
-    private func copyErrorToClipboard(_ error: String) {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(error, forType: .string)
     }
 }
 
