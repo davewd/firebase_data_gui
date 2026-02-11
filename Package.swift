@@ -16,7 +16,8 @@ let package = Package(
         .executableTarget(
             name: "FirebaseDataGUI",
             dependencies: [],
-            path: "Sources"
+            path: "Sources",
+            exclude: ["Info.plist"]
         )
     ]
 )

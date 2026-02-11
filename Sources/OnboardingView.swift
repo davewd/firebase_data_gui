@@ -126,7 +126,7 @@ struct OnboardingView: View {
                 return
             }
             
-            // Validate it's a Firebase service account key
+            // Validate service account and initialize Firebase
             guard let projectId = json["project_id"] as? String,
                   let privateKey = json["private_key"] as? String,
                   let clientEmail = json["client_email"] as? String else {
@@ -134,15 +134,22 @@ struct OnboardingView: View {
                 isLoading = false
                 return
             }
-            
-            // Initialize Firebase
             let manager = FirebaseManager()
+            let databaseURL = (json["database_url"] as? String)?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let normalizedDatabaseURL = databaseURL?.isEmpty == false ? databaseURL : nil
+            let serviceAccount = FirebaseManager.ServiceAccount(
+                projectId: projectId,
+                privateKey: privateKey,
+                clientEmail: clientEmail,
+                databaseURL: normalizedDatabaseURL
+            )
             do {
-                try manager.initialize(with: url)
+                try manager.initialize(with: serviceAccount)
                 appState.firebaseManager = manager
                 appState.isAuthenticated = true
             } catch {
-                errorMessage = "Error: Failed to initialize Firebase - \(error.localizedDescription)"
+                errorMessage = "Error: Invalid Firebase service account key format. \(error.localizedDescription)"
                 isLoading = false
                 return
             }
