@@ -142,3 +142,13 @@ struct OnboardingView: View {
         isLoading = false
     }
 }
+
+#if DEBUG
+struct OnboardingView_Previews: PreviewProvider {
+    static var previews: some View {
+        OnboardingView()
+            .environmentObject(AppState())
+            .frame(width: 600, height: 500)
+    }
+}
+#endif

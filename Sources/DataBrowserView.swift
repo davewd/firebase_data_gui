@@ -263,3 +263,17 @@ struct DataRowView: View {
         }
     }
 }
+
+#if DEBUG
+struct DataBrowserView_Previews: PreviewProvider {
+    static var previews: some View {
+        let appState = AppState()
+        appState.isAuthenticated = true
+        let manager = FirebaseManager()
+        appState.firebaseManager = manager
+        
+        return DataBrowserView()
+            .environmentObject(appState)
+    }
+}
+#endif
