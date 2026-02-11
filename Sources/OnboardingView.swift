@@ -140,23 +140,16 @@ struct OnboardingView: View {
             
             // Initialize Firebase
             let manager = FirebaseManager()
-            let databaseURLKey = FirebaseManager.ServiceAccount.CodingKeys.databaseURL.stringValue
-            let databaseURL = json[databaseURLKey] as? String
+            let databaseURL = json["database_url"] as? String
             let serviceAccount = FirebaseManager.ServiceAccount(
                 projectId: projectId,
                 privateKey: privateKey,
                 clientEmail: clientEmail,
                 databaseURL: databaseURL
             )
-            do {
-                try manager.initialize(with: serviceAccount)
-                appState.firebaseManager = manager
-                appState.isAuthenticated = true
-            } catch {
-                errorMessage = "Error: Failed to initialize Firebase - \(error.localizedDescription)"
-                isLoading = false
-                return
-            }
+            manager.initialize(with: serviceAccount)
+            appState.firebaseManager = manager
+            appState.isAuthenticated = true
             
         } catch {
             errorMessage = "Error: Failed to read file - \(error.localizedDescription)"
