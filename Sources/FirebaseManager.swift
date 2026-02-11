@@ -26,10 +26,30 @@ class FirebaseManager: ObservableObject {
         let data = try Data(contentsOf: serviceKeyURL)
         let decoder = JSONDecoder()
         let account = try decoder.decode(ServiceAccount.self, from: data)
-        initialize(with: account)
+        try initialize(with: account)
     }
 
-    internal func initialize(with serviceAccount: ServiceAccount) {
+    /// Initializes the manager with a decoded service account payload.
+    /// - Parameter serviceAccount: A validated service account model.
+    /// - Throws: An error if required fields are empty.
+    internal func initialize(with serviceAccount: ServiceAccount) throws {
+        var missingFields: [String] = []
+        if serviceAccount.projectId.isEmpty {
+            missingFields.append("projectId")
+        }
+        if serviceAccount.privateKey.isEmpty {
+            missingFields.append("privateKey")
+        }
+        if serviceAccount.clientEmail.isEmpty {
+            missingFields.append("clientEmail")
+        }
+        if !missingFields.isEmpty {
+            throw NSError(
+                domain: "FirebaseDataGUI",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Service account data missing required fields: \(missingFields.joined(separator: ", "))"]
+            )
+        }
         self.serviceAccount = serviceAccount
     }
     

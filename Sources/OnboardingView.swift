@@ -126,30 +126,33 @@ struct OnboardingView: View {
                 return
             }
             
-            // Validate it's a Firebase service account key
-            guard let projectId = json["project_id"] as? String,
-                  !projectId.isEmpty,
-                  let privateKey = json["private_key"] as? String,
-                  !privateKey.isEmpty,
-                  let clientEmail = json["client_email"] as? String,
-                  !clientEmail.isEmpty else {
-                errorMessage = "Error: Invalid Firebase service account key format. Missing required fields."
-                isLoading = false
-                return
-            }
-            
             // Initialize Firebase
             let manager = FirebaseManager()
-            let databaseURL = (json["database_url"] as? String).flatMap { $0.isEmpty ? nil : $0 }
+            let projectId = json["project_id"] as? String ?? ""
+            let privateKey = json["private_key"] as? String ?? ""
+            let clientEmail = json["client_email"] as? String ?? ""
+            let rawDatabaseURL = json["database_url"] as? String
+            let databaseURL: String?
+            if let rawDatabaseURL, !rawDatabaseURL.isEmpty {
+                databaseURL = rawDatabaseURL
+            } else {
+                databaseURL = nil
+            }
             let serviceAccount = FirebaseManager.ServiceAccount(
                 projectId: projectId,
                 privateKey: privateKey,
                 clientEmail: clientEmail,
                 databaseURL: databaseURL
             )
-            manager.initialize(with: serviceAccount)
-            appState.firebaseManager = manager
-            appState.isAuthenticated = true
+            do {
+                try manager.initialize(with: serviceAccount)
+                appState.firebaseManager = manager
+                appState.isAuthenticated = true
+            } catch {
+                errorMessage = "Error: Invalid Firebase service account key format. \(error.localizedDescription)"
+                isLoading = false
+                return
+            }
             
         } catch {
             errorMessage = "Error: Failed to read file - \(error.localizedDescription)"
