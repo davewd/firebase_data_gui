@@ -20,8 +20,8 @@ struct ErrorReporter {
         let timestamp = formatterQueue.sync {
             dateFormatter.string(from: Date())
         }
-        let suffix = String(UUID().uuidString.prefix(8))
-        let errorId = "ERR-\(timestamp)-\(suffix)"
+        let shortUuid = String(UUID().uuidString.prefix(8))
+        let errorId = "ERR-\(timestamp)-\(shortUuid)"
         var detailParts: [String] = []
         if let details = details, !details.isEmpty {
             detailParts.append(details)
