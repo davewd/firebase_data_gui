@@ -55,7 +55,7 @@ class FirebaseManager: ObservableObject {
             } else if let projectId = serviceAccount?.projectId {
                 baseURL = "https://\(projectId)-default-rtdb.firebaseio.com"
             } else {
-                throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "Firebase configuration must include a database URL or project ID"])
+                throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "No valid database URL or project ID available"])
             }
             
             // Construct the URL to fetch root data (limited via shallow query)
