@@ -6,7 +6,7 @@ struct ErrorReporter {
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyyMMdd-HH-mm-ss"
+        formatter.dateFormat = "yyyyMMdd'T'HHmmss"
         return formatter
     }()
     
@@ -26,7 +26,7 @@ struct ErrorReporter {
         if let underlying = underlying {
             detailParts.append(underlying.localizedDescription)
         }
-        let detailText = detailParts.isEmpty ? "No additional details were available." : detailParts.joined(separator: " | ")
+        let detailText = detailParts.isEmpty ? "No additional details are available." : detailParts.joined(separator: " | ")
         
         logger.error(
             "ErrorID: \(errorId, privacy: .public) | Type: \(errorType, privacy: .public) | Resolution: \(resolution, privacy: .public) | Details: \(detailText, privacy: .public)"
