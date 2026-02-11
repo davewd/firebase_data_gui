@@ -3,11 +3,13 @@ import os
 
 struct ErrorReporter {
     private static let logger = Logger(subsystem: "FirebaseDataGUI", category: "Errors")
-    private static let dateFormatter: ISO8601DateFormatter = {
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withFullDate, .withTime, .withDashSeparatorInDate, .withColonSeparatorInTime]
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMddHHmmss"
         return formatter
     }()
+    private static let formatterQueue = DispatchQueue(label: "FirebaseDataGUI.ErrorReporter.DateFormatter")
     
     static func userMessage(
         errorType: String,
@@ -15,11 +17,9 @@ struct ErrorReporter {
         details: String? = nil,
         underlying: Error? = nil
     ) -> String {
-        let rawTimestamp = dateFormatter.string(from: Date())
-        let timestamp = rawTimestamp
-            .replacingOccurrences(of: "-", with: "")
-            .replacingOccurrences(of: ":", with: "")
-            .replacingOccurrences(of: "T", with: "")
+        let timestamp = formatterQueue.sync {
+            dateFormatter.string(from: Date())
+        }
         let suffix = String(UUID().uuidString.prefix(8))
         let errorId = "ERR-\(timestamp)-\(suffix)"
         var detailParts: [String] = []
