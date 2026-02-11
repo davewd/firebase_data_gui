@@ -50,7 +50,7 @@ class FirebaseManager: ObservableObject {
             // For production use, implement OAuth 2.0 token generation from the service account
             // credentials to authenticate requests.
             guard !databaseURL.isEmpty else {
-                throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "No project ID"])
+                throw NSError(domain: "FirebaseDataGUI", code: 1, userInfo: [NSLocalizedDescriptionKey: "No database URL"])
             }
             
             // Construct the URL to fetch root data (limited via shallow query)
