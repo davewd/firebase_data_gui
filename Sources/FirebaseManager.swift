@@ -307,7 +307,7 @@ class FirebaseManager: ObservableObject {
 
     private func privateKeyData(from pemKey: String) throws -> Data {
         let normalizedKey = pemKey.replacingOccurrences(
-            of: #"\\r\\n|\\r|\\n"#,
+            of: "\\\\r\\\\n|\\\\r|\\\\n",
             with: "\n",
             options: .regularExpression
         )
