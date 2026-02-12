@@ -310,7 +310,7 @@ class FirebaseManager: ObservableObject {
               normalizedKey.contains("-----END PRIVATE KEY-----") else {
             throw NSError(
                 domain: "FirebaseDataGUI",
-                code: 12,
+                code: 13,
                 userInfo: [NSLocalizedDescriptionKey: "Private key is missing the expected PEM header/footer. Use the unmodified service account JSON key downloaded from Firebase."]
             )
         }
@@ -329,10 +329,10 @@ class FirebaseManager: ObservableObject {
         let nsError = error as NSError
         if nsError.domain == "FirebaseDataGUI" {
             switch nsError.code {
-            case 7, 8, 9, 10, 12:
+            case 7, 8, 9, 10, 12, 13:
                 return ErrorReporter.userMessage(
                     errorType: "Service Account Key Invalid",
-                    resolution: "Ensure the private_key field contains a valid PKCS#8 PEM key (-----BEGIN PRIVATE KEY-----/-----END PRIVATE KEY-----) from a Firebase service account JSON file. If you copied the key into another file, replace literal \\n with line breaks.",
+                    resolution: "Ensure the private_key field contains a valid PKCS#8 PEM key (-----BEGIN PRIVATE KEY-----/-----END PRIVATE KEY-----) from a Firebase service account JSON file. If you copied the key into another file, replace literal backslash-n sequences with line breaks.",
                     underlying: error
                 )
             case 6, 11:
