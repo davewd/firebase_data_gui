@@ -67,4 +67,4 @@ If any of these are missing, you'll see an error message.
 - The `private_key` field must include the full PEM header and footer:
   `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----`.
 - If you see messages like "Unable to load private key" or "Unable to sign JWT", download a fresh service account JSON key from the Firebase console.
-- If you copied the key into another file, ensure literal `\n` sequences are converted back to line breaks.
+- If you copied the key into another file, replace text containing backslash-n (`\n`) with actual newline characters.
