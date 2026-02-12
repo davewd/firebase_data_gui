@@ -280,7 +280,6 @@ class FirebaseManager: ObservableObject {
         }
         Self.logger.info("Loading private key for JWT signing.")
         let keyData = try privateKeyData(from: privateKey)
-        Self.logger.info("Private key data loaded (\(keyData.count, privacy: .public) bytes).")
         let attributes: [String: Any] = [
             kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
             kSecAttrKeyClass as String: kSecAttrKeyClassPrivate
@@ -340,12 +339,12 @@ class FirebaseManager: ObservableObject {
             case Self.jwtEncodingErrorCode,
                  Self.privateKeyLoadErrorCode,
                  Self.jwtSignErrorCode,
-                 Self.privateKeyDecodeErrorCode,
-                 Self.privateKeyPkcs1ErrorCode,
-                 Self.privateKeyMissingPemErrorCode:
+                Self.privateKeyDecodeErrorCode,
+                Self.privateKeyPkcs1ErrorCode,
+                Self.privateKeyMissingPemErrorCode:
                 return ErrorReporter.userMessage(
                     errorType: "Service Account Key Invalid",
-                    resolution: "Ensure the private_key field contains a valid PKCS#8 PEM key (-----BEGIN PRIVATE KEY-----/-----END PRIVATE KEY-----) from a Firebase service account JSON file. If you copied the key into another file, replace literal backslash-n sequences with line breaks.",
+                    resolution: "Use the unmodified Firebase service account JSON key with a PKCS#8 PEM private key (-----BEGIN PRIVATE KEY-----/-----END PRIVATE KEY-----). If you copied the key into another file, replace literal backslash-n sequences with line breaks.",
                     underlying: error
                 )
             case Self.tokenRequestErrorCode, Self.tokenExpiryErrorCode:
