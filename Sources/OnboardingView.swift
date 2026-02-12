@@ -1,11 +1,13 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import os
 
 struct OnboardingView: View {
     @EnvironmentObject var appState: AppState
     @State private var isDropTargeted = false
     @State private var errorMessage: String?
     @State private var isLoading = false
+    private static let logger = Logger(subsystem: "FirebaseDataGUI", category: "Authentication")
     
     var body: some View {
         VStack(spacing: 30) {
@@ -97,9 +99,10 @@ struct OnboardingView: View {
     
     private func handleDrop(providers: [NSItemProvider]) {
         guard let provider = providers.first else { return }
-        
+        Self.logger.info("Received service account file drop request.")
         _ = provider.loadObject(ofClass: URL.self) { url, error in
             guard let url = url else {
+                Self.logger.error("Failed to resolve dropped file URL. \(error?.localizedDescription ?? "Unknown error", privacy: .public)")
                 DispatchQueue.main.async {
                     self.errorMessage = ErrorReporter.userMessage(
                         errorType: "File Load Failed",
@@ -111,6 +114,7 @@ struct OnboardingView: View {
             }
             
             DispatchQueue.main.async {
+                Self.logger.info("Dropped file resolved. Loading service account JSON.")
                 self.loadServiceKey(from: url)
             }
         }
@@ -132,10 +136,13 @@ struct OnboardingView: View {
     private func loadServiceKey(from url: URL) {
         isLoading = true
         errorMessage = nil
+        Self.logger.info("Loading service account JSON from \(url.lastPathComponent, privacy: .private).")
         
         do {
             let data = try Data(contentsOf: url)
+            Self.logger.info("Read service account file (\(data.count, privacy: .public) bytes).")
             guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                Self.logger.error("Service account JSON root is not a dictionary.")
                 errorMessage = ErrorReporter.userMessage(
                     errorType: "Invalid JSON Format",
                     resolution: "Use a Firebase service account JSON key downloaded from the Firebase console.",
@@ -146,9 +153,11 @@ struct OnboardingView: View {
             }
             
             // Validate service account and initialize Firebase
+            Self.logger.info("Validating service account JSON fields.")
             guard let projectId = json["project_id"] as? String,
                   let privateKey = json["private_key"] as? String,
                   let clientEmail = json["client_email"] as? String else {
+                Self.logger.error("Service account JSON missing required fields.")
                 errorMessage = ErrorReporter.userMessage(
                     errorType: "Service Account Missing Fields",
                     resolution: "Download a new service account key that includes project_id, private_key, and client_email.",
@@ -161,6 +170,7 @@ struct OnboardingView: View {
             let databaseURL = (json["database_url"] as? String)?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             let normalizedDatabaseURL = databaseURL?.isEmpty == false ? databaseURL : nil
+            Self.logger.info("Initializing Firebase manager for project \(projectId, privacy: .public).")
             let serviceAccount = FirebaseManager.ServiceAccount(
                 projectId: projectId,
                 privateKey: privateKey,
@@ -169,9 +179,11 @@ struct OnboardingView: View {
             )
             do {
                 try manager.initialize(with: serviceAccount)
+                Self.logger.info("Firebase manager initialized for \(clientEmail, privacy: .private).")
                 appState.firebaseManager = manager
                 appState.isAuthenticated = true
             } catch {
+                Self.logger.error("Firebase manager initialization failed. \(error.localizedDescription, privacy: .public)")
                 errorMessage = ErrorReporter.userMessage(
                     errorType: "Service Account Validation Failed",
                     resolution: "Verify the service account key values are present and not empty.",
@@ -182,6 +194,7 @@ struct OnboardingView: View {
             }
             
         } catch {
+            Self.logger.error("Unable to read service account file. \(error.localizedDescription, privacy: .public)")
             errorMessage = ErrorReporter.userMessage(
                 errorType: "File Read Failed",
                 resolution: "Ensure the JSON file is accessible and try again.",

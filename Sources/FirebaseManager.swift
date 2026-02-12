@@ -1,5 +1,6 @@
 import Foundation
 import Security
+import os
 
 class FirebaseManager: ObservableObject {
     @Published var data: [String: Any] = [:]
@@ -14,6 +15,7 @@ class FirebaseManager: ObservableObject {
     private static let tokenScope = "https://www.googleapis.com/auth/firebase.database https://www.googleapis.com/auth/userinfo.email"
     private static let tokenExpiryBufferSeconds: TimeInterval = 60
     private static let jwtExpirationSeconds = 3600
+    private static let logger = Logger(subsystem: "FirebaseDataGUI", category: "Authentication")
     
     struct ServiceAccount: Codable {
         let projectId: String
@@ -35,6 +37,7 @@ class FirebaseManager: ObservableObject {
     }
     
     internal func initialize(with serviceKeyURL: URL) throws {
+        Self.logger.info("Decoding service account from file \(serviceKeyURL.lastPathComponent, privacy: .private).")
         let data = try Data(contentsOf: serviceKeyURL)
         let decoder = JSONDecoder()
         let account = try decoder.decode(ServiceAccount.self, from: data)
@@ -45,6 +48,7 @@ class FirebaseManager: ObservableObject {
     /// - Parameter serviceAccount: A validated service account model.
     /// - Throws: An error if required fields are empty.
     internal func initialize(with serviceAccount: ServiceAccount) throws {
+        Self.logger.info("Validating service account fields for initialization.")
         let requiredFields = [
             ("project ID", serviceAccount.projectId.trimmingCharacters(in: Self.trimmedCharacters)),
             ("private key", serviceAccount.privateKey.trimmingCharacters(in: Self.trimmedCharacters)),
@@ -52,6 +56,7 @@ class FirebaseManager: ObservableObject {
         ]
         let missingFields = requiredFields.filter { $0.1.isEmpty }.map { $0.0 }
         if !missingFields.isEmpty {
+            Self.logger.error("Service account validation failed. Missing fields: \(missingFields.joined(separator: ", "), privacy: .public)")
             throw NSError(
                 domain: "FirebaseDataGUI",
                 code: 1,
@@ -60,6 +65,7 @@ class FirebaseManager: ObservableObject {
         }
         self.serviceAccount = serviceAccount
         self.cachedToken = nil
+        Self.logger.info("Service account stored for project \(serviceAccount.projectId, privacy: .public).")
     }
     
     private var databaseURL: String {
@@ -179,13 +185,16 @@ class FirebaseManager: ObservableObject {
 
     private func accessToken() async throws -> String {
         if let cachedToken, cachedToken.expiry > Date().addingTimeInterval(Self.tokenExpiryBufferSeconds) {
+            Self.logger.info("Using cached OAuth token. Expires at \(cachedToken.expiry, privacy: .private).")
             return cachedToken.value
         }
         guard let serviceAccount else {
             throw NSError(domain: "FirebaseDataGUI", code: 4, userInfo: [NSLocalizedDescriptionKey: "Service account not initialized."])
         }
 
+        Self.logger.info("Generating signed JWT for \(serviceAccount.clientEmail, privacy: .private).")
         let jwt = try makeSignedJWT(from: serviceAccount)
+        Self.logger.info("JWT generated. Preparing token request.")
         var components = URLComponents()
         components.queryItems = [
             URLQueryItem(name: "grant_type", value: "urn:ietf:params:oauth:grant-type:jwt-bearer"),
@@ -201,9 +210,11 @@ class FirebaseManager: ObservableObject {
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
         request.httpBody = body
 
+        Self.logger.info("Requesting OAuth token from \(Self.tokenEndpoint, privacy: .public).")
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? Self.unknownStatusCode
+            Self.logger.error("Token request failed with HTTP status \(statusCode, privacy: .public).")
             throw NSError(
                 domain: "FirebaseDataGUI",
                 code: 6,
@@ -221,6 +232,7 @@ class FirebaseManager: ObservableObject {
         let expiry = Date().addingTimeInterval(tokenResponse.expiresIn)
         let token = OAuthToken(value: tokenResponse.accessToken, expiry: expiry)
         cachedToken = token
+        Self.logger.info("OAuth token received. Expires in \(tokenResponse.expiresIn, privacy: .public) seconds.")
         return token.value
     }
 
@@ -235,6 +247,7 @@ class FirebaseManager: ObservableObject {
     }
 
     private func makeSignedJWT(from account: ServiceAccount) throws -> String {
+        Self.logger.info("Building JWT header and claims.")
         let header: [String: String] = ["alg": "RS256", "typ": "JWT"]
         let issuedAt = Int(Date().timeIntervalSince1970)
         let expiration = issuedAt + Self.jwtExpirationSeconds
@@ -251,7 +264,9 @@ class FirebaseManager: ObservableObject {
         let encodedHeader = base64URLEncoded(headerData)
         let encodedClaims = base64URLEncoded(claimsData)
         let signingInput = "\(encodedHeader).\(encodedClaims)"
+        Self.logger.info("Signing JWT.")
         let signature = try sign(input: signingInput, privateKey: account.privateKey)
+        Self.logger.info("JWT signed successfully.")
         return "\(signingInput).\(signature)"
     }
 
@@ -259,6 +274,7 @@ class FirebaseManager: ObservableObject {
         guard let messageData = input.data(using: .utf8) else {
             throw NSError(domain: "FirebaseDataGUI", code: 7, userInfo: [NSLocalizedDescriptionKey: "Unable to encode JWT input."])
         }
+        Self.logger.info("Loading private key for JWT signing.")
         let keyData = try privateKeyData(from: privateKey)
         let attributes: [String: Any] = [
             kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
@@ -279,6 +295,7 @@ class FirebaseManager: ObservableObject {
             let message = error?.takeRetainedValue().localizedDescription ?? "Unknown error"
             throw NSError(domain: "FirebaseDataGUI", code: 9, userInfo: [NSLocalizedDescriptionKey: "Unable to sign JWT: \(message)"])
         }
+        Self.logger.info("JWT signature created.")
         return base64URLEncoded(signature)
     }
 
