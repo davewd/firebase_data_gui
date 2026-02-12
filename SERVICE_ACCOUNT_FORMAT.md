@@ -61,3 +61,10 @@ The app validates the presence of:
 - `client_email` - Service account email address
 
 If any of these are missing, you'll see an error message.
+
+## Troubleshooting Private Key Errors
+
+- The `private_key` field must include the full PEM header and footer:
+  `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----`.
+- If you see messages about RSA private key creation failing, download a fresh service account JSON key from the Firebase console.
+- If you copied the key into another file, ensure literal `\n` sequences are converted back to line breaks.

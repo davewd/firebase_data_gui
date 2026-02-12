@@ -140,11 +140,7 @@ class FirebaseManager: ObservableObject {
             }
         } catch {
             await MainActor.run {
-                self.error = ErrorReporter.userMessage(
-                    errorType: "Database Fetch Failed",
-                    resolution: "Confirm your database URL and security rules allow public read.",
-                    underlying: error
-                )
+                self.error = userMessage(for: error)
             }
         }
         
@@ -276,10 +272,10 @@ class FirebaseManager: ObservableObject {
         }
         Self.logger.info("Loading private key for JWT signing.")
         let keyData = try privateKeyData(from: privateKey)
+        Self.logger.info("Private key data loaded (\(keyData.count, privacy: .public) bytes).")
         let attributes: [String: Any] = [
             kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
-            kSecAttrKeyClass as String: kSecAttrKeyClassPrivate,
-            kSecAttrKeySizeInBits as String: 2048
+            kSecAttrKeyClass as String: kSecAttrKeyClassPrivate
         ]
         var error: Unmanaged<CFError>?
         guard let secKey = SecKeyCreateWithData(keyData as CFData, attributes as CFDictionary, &error) else {
@@ -300,15 +296,60 @@ class FirebaseManager: ObservableObject {
     }
 
     private func privateKeyData(from pemKey: String) throws -> Data {
-        let cleanedKey = pemKey
+        let normalizedKey = pemKey
+            .replacingOccurrences(of: "\\n", with: "\n")
+            .trimmingCharacters(in: Self.trimmedCharacters)
+        if normalizedKey.contains("-----BEGIN RSA PRIVATE KEY-----") {
+            throw NSError(
+                domain: "FirebaseDataGUI",
+                code: 12,
+                userInfo: [NSLocalizedDescriptionKey: "Private key is in PKCS#1 format. Firebase service account keys use PKCS#8 (-----BEGIN PRIVATE KEY-----). Download a new service account JSON key."]
+            )
+        }
+        guard normalizedKey.contains("-----BEGIN PRIVATE KEY-----"),
+              normalizedKey.contains("-----END PRIVATE KEY-----") else {
+            throw NSError(
+                domain: "FirebaseDataGUI",
+                code: 12,
+                userInfo: [NSLocalizedDescriptionKey: "Private key is missing the expected PEM header/footer. Use the unmodified service account JSON key downloaded from Firebase."]
+            )
+        }
+        let cleanedKey = normalizedKey
             .replacingOccurrences(of: "-----BEGIN PRIVATE KEY-----", with: "")
             .replacingOccurrences(of: "-----END PRIVATE KEY-----", with: "")
-            .replacingOccurrences(of: "\n", with: "")
-            .replacingOccurrences(of: "\r", with: "")
+            .components(separatedBy: .whitespacesAndNewlines)
+            .joined()
         guard let keyData = Data(base64Encoded: cleanedKey) else {
             throw NSError(domain: "FirebaseDataGUI", code: 10, userInfo: [NSLocalizedDescriptionKey: "Unable to decode private key."])
         }
         return keyData
+    }
+
+    private func userMessage(for error: Error) -> String {
+        let nsError = error as NSError
+        if nsError.domain == "FirebaseDataGUI" {
+            switch nsError.code {
+            case 7, 8, 9, 10, 12:
+                return ErrorReporter.userMessage(
+                    errorType: "Service Account Key Invalid",
+                    resolution: "Ensure the private_key field contains a valid PKCS#8 PEM key (-----BEGIN PRIVATE KEY-----/-----END PRIVATE KEY-----) from a Firebase service account JSON file. If you copied the key into another file, replace literal \\n with line breaks.",
+                    underlying: error
+                )
+            case 6, 11:
+                return ErrorReporter.userMessage(
+                    errorType: "Authentication Failed",
+                    resolution: "Verify the service account has access to Firebase and your system clock is correct before trying again.",
+                    underlying: error
+                )
+            default:
+                break
+            }
+        }
+        return ErrorReporter.userMessage(
+            errorType: "Database Fetch Failed",
+            resolution: "Confirm your database URL and security rules allow public read.",
+            underlying: error
+        )
     }
 
     private func base64URLEncoded(_ data: Data) -> String {
