@@ -308,7 +308,7 @@ class FirebaseManager: ObservableObject {
     private func privateKeyData(from pemKey: String) throws -> Data {
         let normalizedKey = pemKey
             .replacingOccurrences(of: "\\n", with: "\n")
-            .trimmingCharacters(in: Self.trimmedCharacters)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         if normalizedKey.contains("-----BEGIN RSA PRIVATE KEY-----") {
             throw NSError(
                 domain: "FirebaseDataGUI",

@@ -68,3 +68,4 @@ If any of these are missing, you'll see an error message.
   `-----BEGIN PRIVATE KEY-----` and `-----END PRIVATE KEY-----`.
 - If you see messages like "Unable to load private key" or "Unable to sign JWT", download a fresh service account JSON key from the Firebase console.
 - If you copied the key into another file, replace text containing backslash-n (`\n`) with actual newline characters.
+- Whenever possible, use the original JSON file downloaded from Firebase instead of copying the key manually.
