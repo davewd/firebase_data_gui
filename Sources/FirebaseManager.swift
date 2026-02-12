@@ -307,6 +307,7 @@ class FirebaseManager: ObservableObject {
 
     private func privateKeyData(from pemKey: String) throws -> Data {
         let normalizedKey = pemKey
+            .replacingOccurrences(of: "\\r\\n", with: "\n")
             .replacingOccurrences(of: "\\n", with: "\n")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         if normalizedKey.contains("-----BEGIN RSA PRIVATE KEY-----") {
@@ -347,7 +348,7 @@ class FirebaseManager: ObservableObject {
                  ErrorCode.privateKeyMissingPem.rawValue:
                 return ErrorReporter.userMessage(
                     errorType: "Service Account Key Invalid",
-                    resolution: "Use the unmodified Firebase service account JSON key (PKCS#8 format). If you copied the key manually and see literal \\n text, replace it with actual newline characters.",
+                    resolution: "Use the unmodified Firebase service account JSON key (PKCS#8 format). If you see backslash-n (\\n) in the key text, replace it with actual newline characters.",
                     underlying: error
                 )
             case ErrorCode.tokenRequest.rawValue, ErrorCode.tokenExpiry.rawValue:
