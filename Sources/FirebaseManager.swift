@@ -16,6 +16,14 @@ class FirebaseManager: ObservableObject {
     private static let tokenExpiryBufferSeconds: TimeInterval = 60
     private static let jwtExpirationSeconds = 3600
     private static let logger = Logger(subsystem: "FirebaseDataGUI", category: "Authentication")
+    private static let tokenRequestErrorCode = 6
+    private static let jwtEncodingErrorCode = 7
+    private static let privateKeyLoadErrorCode = 8
+    private static let jwtSignErrorCode = 9
+    private static let privateKeyDecodeErrorCode = 10
+    private static let tokenExpiryErrorCode = 11
+    private static let privateKeyPkcs1ErrorCode = 12
+    private static let privateKeyMissingPemErrorCode = 13
     
     struct ServiceAccount: Codable {
         let projectId: String
@@ -213,7 +221,7 @@ class FirebaseManager: ObservableObject {
             Self.logger.error("Token request failed with HTTP status \(statusCode, privacy: .public).")
             throw NSError(
                 domain: "FirebaseDataGUI",
-                code: 6,
+                code: Self.tokenRequestErrorCode,
                 userInfo: [
                     NSLocalizedDescriptionKey: "Token request failed with HTTP status \(statusCode).",
                     "HTTPStatusCode": statusCode
@@ -223,7 +231,7 @@ class FirebaseManager: ObservableObject {
 
         let tokenResponse = try JSONDecoder().decode(OAuthTokenResponse.self, from: data)
         guard tokenResponse.expiresIn > 0 else {
-            throw NSError(domain: "FirebaseDataGUI", code: 11, userInfo: [NSLocalizedDescriptionKey: "Token response did not include a valid expiry."])
+            throw NSError(domain: "FirebaseDataGUI", code: Self.tokenExpiryErrorCode, userInfo: [NSLocalizedDescriptionKey: "Token response did not include a valid expiry."])
         }
         let expiry = Date().addingTimeInterval(tokenResponse.expiresIn)
         let token = OAuthToken(value: tokenResponse.accessToken, expiry: expiry)
@@ -268,7 +276,7 @@ class FirebaseManager: ObservableObject {
 
     private func sign(input: String, privateKey: String) throws -> String {
         guard let messageData = input.data(using: .utf8) else {
-            throw NSError(domain: "FirebaseDataGUI", code: 7, userInfo: [NSLocalizedDescriptionKey: "Unable to encode JWT input."])
+            throw NSError(domain: "FirebaseDataGUI", code: Self.jwtEncodingErrorCode, userInfo: [NSLocalizedDescriptionKey: "Unable to encode JWT input."])
         }
         Self.logger.info("Loading private key for JWT signing.")
         let keyData = try privateKeyData(from: privateKey)
@@ -280,7 +288,7 @@ class FirebaseManager: ObservableObject {
         var error: Unmanaged<CFError>?
         guard let secKey = SecKeyCreateWithData(keyData as CFData, attributes as CFDictionary, &error) else {
             let message = error?.takeRetainedValue().localizedDescription ?? "Unknown error"
-            throw NSError(domain: "FirebaseDataGUI", code: 8, userInfo: [NSLocalizedDescriptionKey: "Unable to load private key: \(message)"])
+            throw NSError(domain: "FirebaseDataGUI", code: Self.privateKeyLoadErrorCode, userInfo: [NSLocalizedDescriptionKey: "Unable to load private key: \(message)"])
         }
         guard let signature = SecKeyCreateSignature(
             secKey,
@@ -289,7 +297,7 @@ class FirebaseManager: ObservableObject {
             &error
         ) as Data? else {
             let message = error?.takeRetainedValue().localizedDescription ?? "Unknown error"
-            throw NSError(domain: "FirebaseDataGUI", code: 9, userInfo: [NSLocalizedDescriptionKey: "Unable to sign JWT: \(message)"])
+            throw NSError(domain: "FirebaseDataGUI", code: Self.jwtSignErrorCode, userInfo: [NSLocalizedDescriptionKey: "Unable to sign JWT: \(message)"])
         }
         Self.logger.info("JWT signature created.")
         return base64URLEncoded(signature)
@@ -302,7 +310,7 @@ class FirebaseManager: ObservableObject {
         if normalizedKey.contains("-----BEGIN RSA PRIVATE KEY-----") {
             throw NSError(
                 domain: "FirebaseDataGUI",
-                code: 12,
+                code: Self.privateKeyPkcs1ErrorCode,
                 userInfo: [NSLocalizedDescriptionKey: "Private key is in PKCS#1 format. Firebase service account keys use PKCS#8 (-----BEGIN PRIVATE KEY-----). Download a new service account JSON key."]
             )
         }
@@ -310,7 +318,7 @@ class FirebaseManager: ObservableObject {
               normalizedKey.contains("-----END PRIVATE KEY-----") else {
             throw NSError(
                 domain: "FirebaseDataGUI",
-                code: 13,
+                code: Self.privateKeyMissingPemErrorCode,
                 userInfo: [NSLocalizedDescriptionKey: "Private key is missing the expected PEM header/footer. Use the unmodified service account JSON key downloaded from Firebase."]
             )
         }
@@ -320,7 +328,7 @@ class FirebaseManager: ObservableObject {
             .components(separatedBy: .whitespacesAndNewlines)
             .joined()
         guard let keyData = Data(base64Encoded: cleanedKey) else {
-            throw NSError(domain: "FirebaseDataGUI", code: 10, userInfo: [NSLocalizedDescriptionKey: "Unable to decode private key."])
+            throw NSError(domain: "FirebaseDataGUI", code: Self.privateKeyDecodeErrorCode, userInfo: [NSLocalizedDescriptionKey: "Unable to decode private key."])
         }
         return keyData
     }
@@ -329,13 +337,18 @@ class FirebaseManager: ObservableObject {
         let nsError = error as NSError
         if nsError.domain == "FirebaseDataGUI" {
             switch nsError.code {
-            case 7, 8, 9, 10, 12, 13:
+            case Self.jwtEncodingErrorCode,
+                 Self.privateKeyLoadErrorCode,
+                 Self.jwtSignErrorCode,
+                 Self.privateKeyDecodeErrorCode,
+                 Self.privateKeyPkcs1ErrorCode,
+                 Self.privateKeyMissingPemErrorCode:
                 return ErrorReporter.userMessage(
                     errorType: "Service Account Key Invalid",
                     resolution: "Ensure the private_key field contains a valid PKCS#8 PEM key (-----BEGIN PRIVATE KEY-----/-----END PRIVATE KEY-----) from a Firebase service account JSON file. If you copied the key into another file, replace literal backslash-n sequences with line breaks.",
                     underlying: error
                 )
-            case 6, 11:
+            case Self.tokenRequestErrorCode, Self.tokenExpiryErrorCode:
                 return ErrorReporter.userMessage(
                     errorType: "Authentication Failed",
                     resolution: "Verify the service account has access to Firebase and your system clock is correct before trying again.",
