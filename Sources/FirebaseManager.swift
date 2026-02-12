@@ -310,7 +310,6 @@ class FirebaseManager: ObservableObject {
             .replacingOccurrences(of: "\\r\\n", with: "\n")
             .replacingOccurrences(of: "\\n", with: "\n")
             .replacingOccurrences(of: "\\r", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
         if normalizedKey.contains("-----BEGIN RSA PRIVATE KEY-----") {
             throw NSError(
                 domain: "FirebaseDataGUI",
@@ -349,7 +348,7 @@ class FirebaseManager: ObservableObject {
                  ErrorCode.privateKeyMissingPem.rawValue:
                 return ErrorReporter.userMessage(
                     errorType: "Service Account Key Invalid",
-                    resolution: "Use the unmodified Firebase service account JSON key (PKCS#8 format). If the key contains the characters backslash and n (\\\\n), replace them with actual newline characters.",
+                    resolution: "Use the unmodified Firebase service account JSON key (PKCS#8 format). If the key text contains the two-character sequence \\\\n, replace it with actual newline characters.",
                     underlying: error
                 )
             case ErrorCode.tokenRequest.rawValue, ErrorCode.tokenExpiry.rawValue:
