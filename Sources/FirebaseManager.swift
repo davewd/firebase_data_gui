@@ -347,7 +347,7 @@ class FirebaseManager: ObservableObject {
                  ErrorCode.privateKeyMissingPem.rawValue:
                 return ErrorReporter.userMessage(
                     errorType: "Service Account Key Invalid",
-                    resolution: "Use the unmodified Firebase service account JSON key with a PKCS#8 PEM private key (-----BEGIN PRIVATE KEY-----/-----END PRIVATE KEY-----). If you copied the key into another file, replace literal backslash-n sequences with line breaks.",
+                    resolution: "Use the unmodified Firebase service account JSON key (PKCS#8 format). If copied manually, replace backslash-n sequences with actual line breaks.",
                     underlying: error
                 )
             case ErrorCode.tokenRequest.rawValue, ErrorCode.tokenExpiry.rawValue:
