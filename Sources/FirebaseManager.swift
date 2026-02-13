@@ -388,12 +388,12 @@ class FirebaseManager: ObservableObject {
         for item in items {
             let itemType = CFGetTypeID(item as CFTypeRef)
             if itemType == SecKeyGetTypeID() {
-                let key = item as! SecKey
+                let key = unsafeBitCast(item, to: SecKey.self)
                 if isValidPrivateKey(key) {
                     return (key, nil)
                 }
             } else if itemType == SecIdentityGetTypeID() {
-                let identity = item as! SecIdentity
+                let identity = unsafeBitCast(item, to: SecIdentity.self)
                 var privateKey: SecKey?
                 if SecIdentityCopyPrivateKey(identity, &privateKey) == errSecSuccess,
                    let privateKey,
