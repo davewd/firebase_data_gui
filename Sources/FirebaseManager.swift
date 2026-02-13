@@ -404,7 +404,6 @@ class FirebaseManager: ObservableObject {
                 }
             default:
                 Self.logger.warning("Unexpected item type returned by SecItemImport: \(itemType, privacy: .public).")
-                continue
             }
         }
         return (nil, "Imported key did not match expected RSA private key attributes.")
