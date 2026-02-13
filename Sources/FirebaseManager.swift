@@ -15,6 +15,8 @@ class FirebaseManager: ObservableObject {
     private static let tokenScope = "https://www.googleapis.com/auth/firebase.database https://www.googleapis.com/auth/userinfo.email"
     private static let tokenExpiryBufferSeconds: TimeInterval = 60
     private static let jwtExpirationSeconds = 3600
+    private static let privateKeyPreviewLimit = 240
+    private static let escapedNewline = "\\n"
     private static let logger = Logger(subsystem: "FirebaseDataGUI", category: "Authentication")
 
     private enum ErrorCode: Int {
@@ -305,13 +307,18 @@ class FirebaseManager: ObservableObject {
         return base64URLEncoded(signature)
     }
 
-    private func privateKeyData(from pemKey: String) throws -> Data {
-        let normalizedKey = pemKey
+    private func normalizedPrivateKey(_ pemKey: String) -> String {
+        let unescapedKey = pemKey
             .replacingOccurrences(of: "\\r\\n", with: "\n")
-            .replacingOccurrences(of: "\\n", with: "\n")
             .replacingOccurrences(of: "\\r", with: "\n")
+            .replacingOccurrences(of: "\\n", with: "\n")
+        return unescapedKey
             .replacingOccurrences(of: "\r\n", with: "\n")
             .replacingOccurrences(of: "\r", with: "\n")
+    }
+
+    private func privateKeyData(from pemKey: String) throws -> Data {
+        let normalizedKey = normalizedPrivateKey(pemKey)
         if normalizedKey.contains("-----BEGIN RSA PRIVATE KEY-----") {
             throw NSError(
                 domain: "FirebaseDataGUI",
@@ -343,29 +350,27 @@ class FirebaseManager: ObservableObject {
             return "Service account data was not loaded before validating the private key."
         }
         let rawKey = serviceAccount.privateKey
-        let newlineCount = rawKey.filter { $0 == "\n" }.count
-        let containsEscapedSequences = rawKey.contains("\\n") || rawKey.contains("\\r")
-        let escapedKey = rawKey
-            .replacingOccurrences(of: "\r", with: "\\r")
+        let normalizedKey = normalizedPrivateKey(rawKey)
+        let newlineCount = normalizedKey.filter { $0 == "\n" }.count
+        let containsEscapedSequences = rawKey.contains(#"\n"#) || rawKey.contains(#"\r"#)
+        let displayKey = normalizedKey
             .replacingOccurrences(of: "\n", with: "\\n")
-        let lineSeparator = "\\n"
-        let keyLines = escapedKey.components(separatedBy: lineSeparator)
+        let keyLines = displayKey.components(separatedBy: Self.escapedNewline)
         let preview: String
         if keyLines.count > 6 {
-            let start = keyLines.prefix(2).joined(separator: lineSeparator)
-            let end = keyLines.suffix(2).joined(separator: lineSeparator)
-            preview = "\(start)\(lineSeparator)…(redacted \(keyLines.count - 4) lines)…\(lineSeparator)\(end)"
+            let start = keyLines.prefix(2).joined(separator: Self.escapedNewline)
+            let end = keyLines.suffix(2).joined(separator: Self.escapedNewline)
+            preview = "\(start)\(Self.escapedNewline)…(redacted \(keyLines.count - 4) lines)…\(Self.escapedNewline)\(end)"
         } else {
-            preview = escapedKey
+            preview = displayKey
         }
-        let previewLimit = 240
-        let truncatedPreview = preview.count > previewLimit
-            ? "\(preview.prefix(previewLimit))…(truncated)"
+        let truncatedPreview = preview.count > Self.privateKeyPreviewLimit
+            ? "\(preview.prefix(Self.privateKeyPreviewLimit))…(truncated)"
             : preview
-        let hasPemHeader = rawKey.contains("-----BEGIN PRIVATE KEY-----")
-        let hasPemFooter = rawKey.contains("-----END PRIVATE KEY-----")
+        let hasPemHeader = normalizedKey.contains("-----BEGIN PRIVATE KEY-----")
+        let hasPemFooter = normalizedKey.contains("-----END PRIVATE KEY-----")
         return """
-        Parsed private_key length: \(rawKey.count). Newline count: \(newlineCount). Contains literal \\n/\\r: \(containsEscapedSequences).
+        Parsed private_key length: \(normalizedKey.count). Newline count: \(newlineCount). Contains escaped \\n/\\r sequences: \(containsEscapedSequences).
         PEM header present: \(hasPemHeader). PEM footer present: \(hasPemFooter). Escaped preview: \(truncatedPreview)
         """
     }
