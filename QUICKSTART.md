@@ -35,20 +35,20 @@ swift build
 ## 📱 Quick Tips
 
 ### ⚠️ Important: Security Rules
-Before using the app, ensure your Firebase Realtime Database has public read access:
+Before using the app, ensure your Firebase Realtime Database allows authenticated reads:
 1. Go to Firebase Console → Realtime Database → Rules
 2. Set rules to:
 ```json
 {
   "rules": {
-    ".read": true,
+    ".read": "auth != null",
     ".write": false
   }
 }
 ```
 3. Publish the rules
 
-This app uses REST API without OAuth authentication for simplicity. **Do not use with sensitive production data.**
+The app exchanges the service account key for OAuth 2.0 access tokens, so authenticated rules are supported.
 
 ### Navigation
 - **Expand/Collapse**: Click chevron icons (▶/▼) to show/hide nested data
@@ -115,7 +115,7 @@ If you see "... X more items", it means there are additional entries not shown.
 
 For the app to work, your database needs read access. Here are common configurations:
 
-**Public Read (Development Only)**
+**Public Read (Optional)**
 ```json
 {
   "rules": {
@@ -135,7 +135,7 @@ For the app to work, your database needs read access. Here are common configurat
 }
 ```
 
-The service account automatically authenticates, so both configurations work.
+The service account automatically authenticates, so both configurations work. Public read rules are optional.
 
 ## 🔄 Switching Between Projects
 

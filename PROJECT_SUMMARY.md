@@ -22,6 +22,7 @@ A native macOS application built with SwiftUI that allows users to view Firebase
 2. **Firebase Integration**
    - REST API communication
    - Service account credential parsing
+   - OAuth 2.0 token generation for authenticated reads
    - Automatic database URL construction
    - Error handling and retry logic
 
@@ -108,11 +109,10 @@ firebase_data_gui/
 - Direct HTTP communication
 - Full control over requests
 
-### 3. Public Read Access Requirement
-- Current version requires `".read": true` in Firebase rules
-- Clearly documented in UI and docs
-- OAuth authentication planned for v1.1
-- Suitable for dev/staging databases
+### 3. Service Account Authenticated Access
+- Current version uses OAuth 2.0 access tokens from the service account key
+- Supports authenticated rules such as `".read": "auth != null"`
+- Suitable for dev/staging and private read-only databases
 
 ### 4. Limited Data Fetching
 - First 5 entries per collection
@@ -139,14 +139,13 @@ firebase_data_gui/
 - Clear security documentation
 
 ⚠️ **Current Limitations:**
-- Requires public read access
-- Service account key not used for auth
-- Not suitable for sensitive prod data
+- Requires correct database URL configuration
+- Read-only access only
+- Tokens expire and must be refreshed
 
 📋 **Planned Improvements:**
-- OAuth 2.0 token generation (v1.1)
-- Authenticated requests
-- Support for private databases
+- Additional authentication flows (user-based sign-in)
+- Enhanced diagnostics for access failures
 
 ---
 
@@ -198,7 +197,7 @@ All major aspects covered:
 1. Open on macOS with Xcode installed
 2. Run: `open Package.swift`
 3. Build and run (⌘+R)
-4. Prepare a Firebase project with public read rules
+4. Prepare a Firebase project with authenticated read rules
 5. Drop service account key and verify functionality
 
 ---
@@ -232,7 +231,7 @@ All major aspects covered:
    ```
 
 2. **Configure Firebase:**
-   - Set database rules to allow public read
+   - Set database rules to allow authenticated read
    - Generate service account key
    - Download JSON file
 
@@ -241,10 +240,9 @@ All major aspects covered:
    - Drop service key file
    - Browse your data!
 
-4. **Consider OAuth Implementation:**
+4. **Review Authentication Settings:**
    - See FUTURE_ENHANCEMENTS.md
-   - Implement for production use
-   - Enable private database access
+   - Consider additional auth flows for production use
 
 ---
 

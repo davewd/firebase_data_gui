@@ -4,28 +4,15 @@ This document outlines potential improvements and features for future versions o
 
 ## High Priority Enhancements
 
-### 1. OAuth 2.0 Authentication (Most Important)
+### 1. Authentication Enhancements (Most Important)
 
 **Current State:**
-- App uses REST API without authentication
-- Requires public read access configured in Firebase security rules
-- Service account credentials are validated but not used for authentication
+- App uses REST API with OAuth 2.0 service account tokens
+- Supports private databases without public read access
 
-**Proposed Implementation:**
-- Generate JWT tokens from service account private key
-- Use JWT for authenticated requests to Firebase
-- Support for private databases without public read access
-
-**Benefits:**
-- Access to private/production databases
-- Proper security without exposing data
-- Full utilization of service account credentials
-
-**Implementation Steps:**
-1. Add JWT token generation using service account private key
-2. Sign JWT with RS256 algorithm
-3. Include JWT in Firebase REST API requests
-4. Handle token refresh (tokens expire after 1 hour)
+**Proposed Enhancements:**
+- Optional user-based authentication flows
+- Additional diagnostics for token and access issues
 
 **Code Example:**
 ```swift

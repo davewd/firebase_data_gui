@@ -112,14 +112,17 @@ class FirebaseManager: ObservableObject {
             let accessToken = try await accessToken()
             
             // Construct the URL to fetch root data (limited via shallow query)
-            let urlString = "\(resolvedDatabaseURL)/.json?shallow=true"
-            guard let url = URL(string: urlString) else {
+            var components = URLComponents(string: "\(resolvedDatabaseURL)/.json")
+            components?.queryItems = [
+                URLQueryItem(name: "shallow", value: "true"),
+                URLQueryItem(name: "access_token", value: accessToken)
+            ]
+            guard let url = components?.url else {
                 throw NSError(domain: "FirebaseDataGUI", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
             }
             
             var request = URLRequest(url: url)
             request.httpMethod = "GET"
-            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
             
             let (data, response) = try await URLSession.shared.data(for: request)
             
@@ -169,12 +172,15 @@ class FirebaseManager: ObservableObject {
     
     func fetchData(at path: String, accessToken: String) async -> Any? {
         do {
-            let urlString = "\(databaseURL)/\(path).json?limitToFirst=5"
-            guard let url = URL(string: urlString) else { return nil }
+            var components = URLComponents(string: "\(databaseURL)/\(path).json")
+            components?.queryItems = [
+                URLQueryItem(name: "limitToFirst", value: "5"),
+                URLQueryItem(name: "access_token", value: accessToken)
+            ]
+            guard let url = components?.url else { return nil }
             
             var request = URLRequest(url: url)
             request.httpMethod = "GET"
-            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
             
             let (data, response) = try await URLSession.shared.data(for: request)
             
@@ -188,7 +194,7 @@ class FirebaseManager: ObservableObject {
             await MainActor.run {
                 self.error = ErrorReporter.userMessage(
                     errorType: "Data Fetch Failed",
-                    resolution: "Verify the selected path exists and your database allows public reads.",
+                    resolution: "Verify the selected path exists and the service account has read access.",
                     details: "Path: \(path)",
                     underlying: error
                 )
@@ -477,7 +483,7 @@ class FirebaseManager: ObservableObject {
         }
         return ErrorReporter.userMessage(
             errorType: "Database Fetch Failed",
-            resolution: "Confirm your database URL and security rules allow public read.",
+            resolution: "Confirm your database URL is correct and the service account has read access.",
             underlying: error
         )
     }

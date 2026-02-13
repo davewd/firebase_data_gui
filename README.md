@@ -13,25 +13,22 @@ A simple macOS application for viewing Firebase Realtime Database data in a read
 
 ## Important: Firebase Security Rules
 
-⚠️ **This app requires your Firebase Realtime Database to have public read access configured.**
+✅ **This app uses OAuth 2.0 access tokens derived from your service account key for private reads.**
 
-The current implementation uses Firebase's REST API without OAuth authentication for simplicity. Your database security rules must allow unauthenticated read access:
+Ensure your database security rules allow authenticated reads for the service account:
 
 ```json
 {
   "rules": {
-    ".read": true,
+    ".read": "auth != null",
     ".write": false
   }
 }
 ```
 
-**For production databases with sensitive data**, this approach is not recommended. The service account key is validated but not currently used for authentication. Future versions may implement OAuth 2.0 token generation for authenticated access.
-
 **Recommended Use Cases:**
 - Development/staging databases
-- Public read-only data
-- Non-sensitive data
+- Private read-only data with service account access
 - Database structure inspection
 
 ## Requirements
@@ -154,19 +151,17 @@ firebase_data_gui/
 
 ## Firebase Security Rules
 
-For the app to work, your Firebase Realtime Database needs read access configured. The current implementation uses the REST API without OAuth authentication, so you need to allow read access:
+For the app to work, your Firebase Realtime Database needs read access configured for authenticated requests. The app exchanges your service account key for OAuth 2.0 access tokens.
 
-**Public Read (Development/Testing)**
+**Authenticated Read (Recommended)**
 ```json
 {
   "rules": {
-    ".read": true,
+    ".read": "auth != null",
     ".write": false
   }
 }
 ```
-
-**Note:** For production use with sensitive data, you may want to implement OAuth 2.0 token generation from the service account credentials. The current implementation prioritizes simplicity and is suitable for development databases or public read-only data.
 
 ## Troubleshooting
 
@@ -176,7 +171,7 @@ For the app to work, your Firebase Realtime Database needs read access configure
 
 ### "Failed to fetch data"
 - Check your internet connection
-- Verify your Firebase Realtime Database has security rules that allow read access
+- Verify your Firebase Realtime Database rules allow authenticated reads
 - Ensure your database URL is correct (default: `https://PROJECT_ID-default-rtdb.firebaseio.com`)
 
 ### No data showing
