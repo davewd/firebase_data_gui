@@ -387,12 +387,13 @@ class FirebaseManager: ObservableObject {
         }
         for item in items {
             let itemType = CFGetTypeID(item as CFTypeRef)
-            if itemType == SecKeyGetTypeID() {
+            switch itemType {
+            case SecKeyGetTypeID():
                 let key = unsafeBitCast(item, to: SecKey.self)
                 if isValidPrivateKey(key) {
                     return (key, nil)
                 }
-            } else if itemType == SecIdentityGetTypeID() {
+            case SecIdentityGetTypeID():
                 let identity = unsafeBitCast(item, to: SecIdentity.self)
                 var privateKey: SecKey?
                 if SecIdentityCopyPrivateKey(identity, &privateKey) == errSecSuccess,
@@ -400,6 +401,8 @@ class FirebaseManager: ObservableObject {
                    isValidPrivateKey(privateKey) {
                     return (privateKey, nil)
                 }
+            default:
+                continue
             }
         }
         return (nil, "Imported key did not match expected RSA private key attributes.")
