@@ -113,16 +113,14 @@ class FirebaseManager: ObservableObject {
             
             // Construct the URL to fetch root data (limited via shallow query)
             var components = URLComponents(string: "\(resolvedDatabaseURL)/.json")
-            components?.queryItems = [
-                URLQueryItem(name: "shallow", value: "true"),
-                URLQueryItem(name: "access_token", value: accessToken)
-            ]
+            components?.queryItems = [URLQueryItem(name: "shallow", value: "true")]
             guard let url = components?.url else {
                 throw NSError(domain: "FirebaseDataGUI", code: 2, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
             }
             
             var request = URLRequest(url: url)
             request.httpMethod = "GET"
+            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
             
             let (data, response) = try await URLSession.shared.data(for: request)
             
@@ -173,14 +171,12 @@ class FirebaseManager: ObservableObject {
     func fetchData(at path: String, accessToken: String) async -> Any? {
         do {
             var components = URLComponents(string: "\(databaseURL)/\(path).json")
-            components?.queryItems = [
-                URLQueryItem(name: "limitToFirst", value: "5"),
-                URLQueryItem(name: "access_token", value: accessToken)
-            ]
+            components?.queryItems = [URLQueryItem(name: "limitToFirst", value: "5")]
             guard let url = components?.url else { return nil }
             
             var request = URLRequest(url: url)
             request.httpMethod = "GET"
+            request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
             
             let (data, response) = try await URLSession.shared.data(for: request)
             
