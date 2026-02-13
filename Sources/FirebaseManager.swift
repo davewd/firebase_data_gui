@@ -298,12 +298,20 @@ class FirebaseManager: ObservableObject {
         let secKey: SecKey
         if let createdKey = SecKeyCreateWithData(keyMaterial.derData as CFData, attributes as CFDictionary, &error) {
             secKey = createdKey
-        } else if let importedKey = importPrivateKey(from: keyMaterial.normalizedKey) {
-            Self.logger.info("Private key loaded via SecItemImport fallback.")
-            secKey = importedKey
         } else {
-            let message = error?.takeRetainedValue().localizedDescription ?? "Unknown error"
-            throw NSError(domain: "FirebaseDataGUI", code: ErrorCode.privateKeyLoad.rawValue, userInfo: [NSLocalizedDescriptionKey: "Unable to load private key: \(message)"])
+            let importResult = importPrivateKey(from: keyMaterial.normalizedKey)
+            if let importedKey = importResult.key {
+                Self.logger.info("Private key loaded via SecItemImport fallback.")
+                secKey = importedKey
+            } else {
+                let message = error?.takeRetainedValue().localizedDescription ?? "Unknown error"
+                let fallbackMessage = importResult.errorMessage.map { " Fallback import failed: \($0)" } ?? ""
+                throw NSError(
+                    domain: "FirebaseDataGUI",
+                    code: ErrorCode.privateKeyLoad.rawValue,
+                    userInfo: [NSLocalizedDescriptionKey: "Unable to load private key: \(message)\(fallbackMessage)"]
+                )
+            }
         }
         guard let signature = SecKeyCreateSignature(
             secKey,
@@ -356,9 +364,9 @@ class FirebaseManager: ObservableObject {
         return PrivateKeyMaterial(normalizedKey: normalizedKey, derData: keyData)
     }
 
-    private func importPrivateKey(from normalizedKey: String) -> SecKey? {
+    private func importPrivateKey(from normalizedKey: String) -> (key: SecKey?, errorMessage: String?) {
         guard let pemData = normalizedKey.data(using: .utf8) else {
-            return nil
+            return (nil, "Unable to encode PEM key for import.")
         }
         var format = SecExternalFormat.formatUnknown
         var itemType = SecExternalItemType.itemTypeUnknown
@@ -374,20 +382,35 @@ class FirebaseManager: ObservableObject {
             &importedItems
         )
         guard status == errSecSuccess, let items = importedItems as? [Any] else {
-            return nil
+            let message = SecCopyErrorMessageString(status, nil) as String? ?? "OSStatus \(status)"
+            return (nil, message)
         }
         for item in items {
             if let key = item as? SecKey {
-                return key
+                if isValidPrivateKey(key) {
+                    return (key, nil)
+                }
             }
             if let identity = item as? SecIdentity {
                 var privateKey: SecKey?
-                if SecIdentityCopyPrivateKey(identity, &privateKey) == errSecSuccess, let privateKey {
-                    return privateKey
+                if SecIdentityCopyPrivateKey(identity, &privateKey) == errSecSuccess,
+                   let privateKey,
+                   isValidPrivateKey(privateKey) {
+                    return (privateKey, nil)
                 }
             }
         }
-        return nil
+        return (nil, "Imported key did not match expected RSA private key attributes.")
+    }
+
+    private func isValidPrivateKey(_ key: SecKey) -> Bool {
+        guard let attributes = SecKeyCopyAttributes(key) as? [CFString: Any],
+              let keyType = attributes[kSecAttrKeyType] as? String,
+              let keyClass = attributes[kSecAttrKeyClass] as? String else {
+            return false
+        }
+        return keyType == (kSecAttrKeyTypeRSA as String)
+            && keyClass == (kSecAttrKeyClassPrivate as String)
     }
 
     private func privateKeyDiagnostics() -> String {
