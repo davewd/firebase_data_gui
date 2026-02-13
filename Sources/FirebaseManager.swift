@@ -15,6 +15,8 @@ class FirebaseManager: ObservableObject {
     private static let tokenScope = "https://www.googleapis.com/auth/firebase.database https://www.googleapis.com/auth/userinfo.email"
     private static let tokenExpiryBufferSeconds: TimeInterval = 60
     private static let jwtExpirationSeconds = 3600
+    private static let privateKeyPreviewLimit = 240
+    private static let escapedNewline = "\\n"
     private static let logger = Logger(subsystem: "FirebaseDataGUI", category: "Authentication")
 
     private enum ErrorCode: Int {
@@ -305,12 +307,18 @@ class FirebaseManager: ObservableObject {
         return base64URLEncoded(signature)
     }
 
+    private func normalizedPrivateKey(_ pemKey: String) -> String {
+        let unescapedKey = pemKey
+            .replacingOccurrences(of: "\\r\\n", with: "\n")
+            .replacingOccurrences(of: "\\r", with: "\n")
+            .replacingOccurrences(of: "\\n", with: "\n")
+        return unescapedKey
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+    }
+
     private func privateKeyData(from pemKey: String) throws -> Data {
-        let normalizedKey = pemKey.replacingOccurrences(
-            of: "\\\\r\\\\n|\\\\r|\\\\n",
-            with: "\n",
-            options: .regularExpression
-        )
+        let normalizedKey = normalizedPrivateKey(pemKey)
         if normalizedKey.contains("-----BEGIN RSA PRIVATE KEY-----") {
             throw NSError(
                 domain: "FirebaseDataGUI",
@@ -337,6 +345,36 @@ class FirebaseManager: ObservableObject {
         return keyData
     }
 
+    private func privateKeyDiagnostics() -> String {
+        guard let serviceAccount else {
+            return "Service account data was not loaded before validating the private key."
+        }
+        let rawKey = serviceAccount.privateKey
+        let normalizedKey = normalizedPrivateKey(rawKey)
+        let newlineCount = normalizedKey.filter { $0 == "\n" }.count
+        let containsEscapedSequences = rawKey.contains(#"\n"#) || rawKey.contains(#"\r"#)
+        let displayKey = normalizedKey
+            .replacingOccurrences(of: "\n", with: "\\n")
+        let keyLines = displayKey.components(separatedBy: Self.escapedNewline)
+        let preview: String
+        if keyLines.count > 6 {
+            let start = keyLines.prefix(2).joined(separator: Self.escapedNewline)
+            let end = keyLines.suffix(2).joined(separator: Self.escapedNewline)
+            preview = "\(start)\(Self.escapedNewline)…(redacted \(keyLines.count - 4) lines)…\(Self.escapedNewline)\(end)"
+        } else {
+            preview = displayKey
+        }
+        let truncatedPreview = preview.count > Self.privateKeyPreviewLimit
+            ? "\(preview.prefix(Self.privateKeyPreviewLimit))…(truncated)"
+            : preview
+        let hasPemHeader = normalizedKey.contains("-----BEGIN PRIVATE KEY-----")
+        let hasPemFooter = normalizedKey.contains("-----END PRIVATE KEY-----")
+        return """
+        Parsed private_key length: \(normalizedKey.count). Newline count: \(newlineCount). Contains escaped \\n/\\r sequences: \(containsEscapedSequences).
+        PEM header present: \(hasPemHeader). PEM footer present: \(hasPemFooter). Escaped preview: \(truncatedPreview)
+        """
+    }
+
     private func userMessage(for error: Error) -> String {
         let nsError = error as NSError
         if nsError.domain == "FirebaseDataGUI" {
@@ -350,6 +388,7 @@ class FirebaseManager: ObservableObject {
                 return ErrorReporter.userMessage(
                     errorType: "Service Account Key Invalid",
                     resolution: "Use the unmodified Firebase service account JSON key (PKCS#8 format). If the key text contains a backslash followed by the letter n, replace it with actual newline characters.",
+                    details: privateKeyDiagnostics(),
                     underlying: error
                 )
             case ErrorCode.tokenRequest.rawValue, ErrorCode.tokenExpiry.rawValue:
