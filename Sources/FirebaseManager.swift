@@ -387,14 +387,15 @@ class FirebaseManager: ObservableObject {
         }
         for item in items {
             let itemType = CFGetTypeID(item as CFTypeRef)
+            // Safe to force-cast because the CFTypeID is checked in each case.
             switch itemType {
             case SecKeyGetTypeID():
-                let key = unsafeBitCast(item, to: SecKey.self)
+                let key = item as! SecKey
                 if isValidPrivateKey(key) {
                     return (key, nil)
                 }
             case SecIdentityGetTypeID():
-                let identity = unsafeBitCast(item, to: SecIdentity.self)
+                let identity = item as! SecIdentity
                 var privateKey: SecKey?
                 if SecIdentityCopyPrivateKey(identity, &privateKey) == errSecSuccess,
                    let privateKey,
