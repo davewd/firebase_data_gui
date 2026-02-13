@@ -392,8 +392,7 @@ class FirebaseManager: ObservableObject {
                 if isValidPrivateKey(key) {
                     return (key, nil)
                 }
-            }
-            if itemType == SecIdentityGetTypeID() {
+            } else if itemType == SecIdentityGetTypeID() {
                 let identity = item as! SecIdentity
                 var privateKey: SecKey?
                 if SecIdentityCopyPrivateKey(identity, &privateKey) == errSecSuccess,
