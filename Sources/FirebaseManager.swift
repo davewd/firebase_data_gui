@@ -387,7 +387,7 @@ class FirebaseManager: ObservableObject {
         }
         for item in items {
             let itemType = CFGetTypeID(item as CFTypeRef)
-            // Safe to force-cast after CFTypeID verification confirms the item's Core Foundation type.
+            // Safe to force-cast: SecItemImport only returns SecKey/SecIdentity items, and CFTypeID verification has confirmed the Core Foundation type.
             switch itemType {
             case SecKeyGetTypeID():
                 let key = item as! SecKey
