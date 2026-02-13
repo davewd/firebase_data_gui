@@ -386,18 +386,24 @@ class FirebaseManager: ObservableObject {
             return (nil, message)
         }
         for item in items {
-            if let key = item as? SecKey {
+            let itemType = CFGetTypeID(item as CFTypeRef)
+            // Safe to force-cast: CFTypeID verification confirms the item's Core Foundation type before casting.
+            switch itemType {
+            case SecKeyGetTypeID():
+                let key = item as! SecKey
                 if isValidPrivateKey(key) {
                     return (key, nil)
                 }
-            }
-            if let identity = item as? SecIdentity {
+            case SecIdentityGetTypeID():
+                let identity = item as! SecIdentity
                 var privateKey: SecKey?
                 if SecIdentityCopyPrivateKey(identity, &privateKey) == errSecSuccess,
                    let privateKey,
                    isValidPrivateKey(privateKey) {
                     return (privateKey, nil)
                 }
+            default:
+                Self.logger.warning("Unexpected item type returned by SecItemImport: \(itemType, privacy: .public).")
             }
         }
         return (nil, "Imported key did not match expected RSA private key attributes.")
