@@ -306,11 +306,12 @@ class FirebaseManager: ObservableObject {
     }
 
     private func privateKeyData(from pemKey: String) throws -> Data {
-        let normalizedKey = pemKey.replacingOccurrences(
-            of: "\\\\r\\\\n|\\\\r|\\\\n",
-            with: "\n",
-            options: .regularExpression
-        )
+        let normalizedKey = pemKey
+            .replacingOccurrences(of: "\\r\\n", with: "\n")
+            .replacingOccurrences(of: "\\n", with: "\n")
+            .replacingOccurrences(of: "\\r", with: "\n")
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
         if normalizedKey.contains("-----BEGIN RSA PRIVATE KEY-----") {
             throw NSError(
                 domain: "FirebaseDataGUI",
@@ -337,6 +338,38 @@ class FirebaseManager: ObservableObject {
         return keyData
     }
 
+    private func privateKeyDiagnostics() -> String {
+        guard let serviceAccount else {
+            return "Service account data was not loaded before validating the private key."
+        }
+        let rawKey = serviceAccount.privateKey
+        let newlineCount = rawKey.filter { $0 == "\n" }.count
+        let containsEscapedSequences = rawKey.contains("\\n") || rawKey.contains("\\r")
+        let escapedKey = rawKey
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\n", with: "\\n")
+        let lineSeparator = "\\n"
+        let keyLines = escapedKey.components(separatedBy: lineSeparator)
+        let preview: String
+        if keyLines.count > 6 {
+            let start = keyLines.prefix(2).joined(separator: lineSeparator)
+            let end = keyLines.suffix(2).joined(separator: lineSeparator)
+            preview = "\(start)\(lineSeparator)…(redacted \(keyLines.count - 4) lines)…\(lineSeparator)\(end)"
+        } else {
+            preview = escapedKey
+        }
+        let previewLimit = 240
+        let truncatedPreview = preview.count > previewLimit
+            ? "\(preview.prefix(previewLimit))…(truncated)"
+            : preview
+        let hasPemHeader = rawKey.contains("-----BEGIN PRIVATE KEY-----")
+        let hasPemFooter = rawKey.contains("-----END PRIVATE KEY-----")
+        return """
+        Parsed private_key length: \(rawKey.count). Newline count: \(newlineCount). Contains literal \\n/\\r: \(containsEscapedSequences).
+        PEM header present: \(hasPemHeader). PEM footer present: \(hasPemFooter). Escaped preview: \(truncatedPreview)
+        """
+    }
+
     private func userMessage(for error: Error) -> String {
         let nsError = error as NSError
         if nsError.domain == "FirebaseDataGUI" {
@@ -350,6 +383,7 @@ class FirebaseManager: ObservableObject {
                 return ErrorReporter.userMessage(
                     errorType: "Service Account Key Invalid",
                     resolution: "Use the unmodified Firebase service account JSON key (PKCS#8 format). If the key text contains a backslash followed by the letter n, replace it with actual newline characters.",
+                    details: privateKeyDiagnostics(),
                     underlying: error
                 )
             case ErrorCode.tokenRequest.rawValue, ErrorCode.tokenExpiry.rawValue:
