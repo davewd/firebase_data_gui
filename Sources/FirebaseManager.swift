@@ -16,6 +16,17 @@ class FirebaseManager: ObservableObject {
     private static let tokenExpiryBufferSeconds: TimeInterval = 60
     private static let jwtExpirationSeconds = 3600
     private static let logger = Logger(subsystem: "FirebaseDataGUI", category: "Authentication")
+
+    private enum ErrorCode: Int {
+        case tokenRequest = 6
+        case jwtEncoding = 7
+        case privateKeyLoad = 8
+        case jwtSign = 9
+        case privateKeyDecode = 10
+        case tokenExpiry = 11
+        case privateKeyPkcs1 = 12
+        case privateKeyMissingPem = 13
+    }
     
     struct ServiceAccount: Codable {
         let projectId: String
@@ -140,11 +151,7 @@ class FirebaseManager: ObservableObject {
             }
         } catch {
             await MainActor.run {
-                self.error = ErrorReporter.userMessage(
-                    errorType: "Database Fetch Failed",
-                    resolution: "Confirm your database URL and security rules allow public read.",
-                    underlying: error
-                )
+                self.error = userMessage(for: error)
             }
         }
         
@@ -217,7 +224,7 @@ class FirebaseManager: ObservableObject {
             Self.logger.error("Token request failed with HTTP status \(statusCode, privacy: .public).")
             throw NSError(
                 domain: "FirebaseDataGUI",
-                code: 6,
+                code: ErrorCode.tokenRequest.rawValue,
                 userInfo: [
                     NSLocalizedDescriptionKey: "Token request failed with HTTP status \(statusCode).",
                     "HTTPStatusCode": statusCode
@@ -227,7 +234,7 @@ class FirebaseManager: ObservableObject {
 
         let tokenResponse = try JSONDecoder().decode(OAuthTokenResponse.self, from: data)
         guard tokenResponse.expiresIn > 0 else {
-            throw NSError(domain: "FirebaseDataGUI", code: 11, userInfo: [NSLocalizedDescriptionKey: "Token response did not include a valid expiry."])
+            throw NSError(domain: "FirebaseDataGUI", code: ErrorCode.tokenExpiry.rawValue, userInfo: [NSLocalizedDescriptionKey: "Token response did not include a valid expiry."])
         }
         let expiry = Date().addingTimeInterval(tokenResponse.expiresIn)
         let token = OAuthToken(value: tokenResponse.accessToken, expiry: expiry)
@@ -272,19 +279,18 @@ class FirebaseManager: ObservableObject {
 
     private func sign(input: String, privateKey: String) throws -> String {
         guard let messageData = input.data(using: .utf8) else {
-            throw NSError(domain: "FirebaseDataGUI", code: 7, userInfo: [NSLocalizedDescriptionKey: "Unable to encode JWT input."])
+            throw NSError(domain: "FirebaseDataGUI", code: ErrorCode.jwtEncoding.rawValue, userInfo: [NSLocalizedDescriptionKey: "Unable to encode JWT input."])
         }
         Self.logger.info("Loading private key for JWT signing.")
         let keyData = try privateKeyData(from: privateKey)
         let attributes: [String: Any] = [
             kSecAttrKeyType as String: kSecAttrKeyTypeRSA,
-            kSecAttrKeyClass as String: kSecAttrKeyClassPrivate,
-            kSecAttrKeySizeInBits as String: 2048
+            kSecAttrKeyClass as String: kSecAttrKeyClassPrivate
         ]
         var error: Unmanaged<CFError>?
         guard let secKey = SecKeyCreateWithData(keyData as CFData, attributes as CFDictionary, &error) else {
             let message = error?.takeRetainedValue().localizedDescription ?? "Unknown error"
-            throw NSError(domain: "FirebaseDataGUI", code: 8, userInfo: [NSLocalizedDescriptionKey: "Unable to load private key: \(message)"])
+            throw NSError(domain: "FirebaseDataGUI", code: ErrorCode.privateKeyLoad.rawValue, userInfo: [NSLocalizedDescriptionKey: "Unable to load private key: \(message)"])
         }
         guard let signature = SecKeyCreateSignature(
             secKey,
@@ -293,22 +299,74 @@ class FirebaseManager: ObservableObject {
             &error
         ) as Data? else {
             let message = error?.takeRetainedValue().localizedDescription ?? "Unknown error"
-            throw NSError(domain: "FirebaseDataGUI", code: 9, userInfo: [NSLocalizedDescriptionKey: "Unable to sign JWT: \(message)"])
+            throw NSError(domain: "FirebaseDataGUI", code: ErrorCode.jwtSign.rawValue, userInfo: [NSLocalizedDescriptionKey: "Unable to sign JWT: \(message)"])
         }
         Self.logger.info("JWT signature created.")
         return base64URLEncoded(signature)
     }
 
     private func privateKeyData(from pemKey: String) throws -> Data {
-        let cleanedKey = pemKey
+        let normalizedKey = pemKey.replacingOccurrences(
+            of: "\\\\r\\\\n|\\\\r|\\\\n",
+            with: "\n",
+            options: .regularExpression
+        )
+        if normalizedKey.contains("-----BEGIN RSA PRIVATE KEY-----") {
+            throw NSError(
+                domain: "FirebaseDataGUI",
+                code: ErrorCode.privateKeyPkcs1.rawValue,
+                userInfo: [NSLocalizedDescriptionKey: "Private key is in PKCS#1 format. Firebase service account keys use PKCS#8 (-----BEGIN PRIVATE KEY-----). Download a new service account JSON key."]
+            )
+        }
+        guard normalizedKey.contains("-----BEGIN PRIVATE KEY-----"),
+              normalizedKey.contains("-----END PRIVATE KEY-----") else {
+            throw NSError(
+                domain: "FirebaseDataGUI",
+                code: ErrorCode.privateKeyMissingPem.rawValue,
+                userInfo: [NSLocalizedDescriptionKey: "Private key is missing the expected PEM header/footer. Use the unmodified service account JSON key downloaded from Firebase."]
+            )
+        }
+        let cleanedKey = normalizedKey
             .replacingOccurrences(of: "-----BEGIN PRIVATE KEY-----", with: "")
             .replacingOccurrences(of: "-----END PRIVATE KEY-----", with: "")
-            .replacingOccurrences(of: "\n", with: "")
-            .replacingOccurrences(of: "\r", with: "")
+            .components(separatedBy: .whitespacesAndNewlines)
+            .joined()
         guard let keyData = Data(base64Encoded: cleanedKey) else {
-            throw NSError(domain: "FirebaseDataGUI", code: 10, userInfo: [NSLocalizedDescriptionKey: "Unable to decode private key."])
+            throw NSError(domain: "FirebaseDataGUI", code: ErrorCode.privateKeyDecode.rawValue, userInfo: [NSLocalizedDescriptionKey: "Unable to decode private key."])
         }
         return keyData
+    }
+
+    private func userMessage(for error: Error) -> String {
+        let nsError = error as NSError
+        if nsError.domain == "FirebaseDataGUI" {
+            switch nsError.code {
+            case ErrorCode.jwtEncoding.rawValue,
+                 ErrorCode.privateKeyLoad.rawValue,
+                 ErrorCode.jwtSign.rawValue,
+                 ErrorCode.privateKeyDecode.rawValue,
+                 ErrorCode.privateKeyPkcs1.rawValue,
+                 ErrorCode.privateKeyMissingPem.rawValue:
+                return ErrorReporter.userMessage(
+                    errorType: "Service Account Key Invalid",
+                    resolution: "Use the unmodified Firebase service account JSON key (PKCS#8 format). If the key text contains a backslash followed by the letter n, replace it with actual newline characters.",
+                    underlying: error
+                )
+            case ErrorCode.tokenRequest.rawValue, ErrorCode.tokenExpiry.rawValue:
+                return ErrorReporter.userMessage(
+                    errorType: "Authentication Failed",
+                    resolution: "Verify the service account has access to Firebase and your system clock is correct before trying again.",
+                    underlying: error
+                )
+            default:
+                break
+            }
+        }
+        return ErrorReporter.userMessage(
+            errorType: "Database Fetch Failed",
+            resolution: "Confirm your database URL and security rules allow public read.",
+            underlying: error
+        )
     }
 
     private func base64URLEncoded(_ data: Data) -> String {
