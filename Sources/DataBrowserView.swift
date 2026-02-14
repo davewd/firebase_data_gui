@@ -180,7 +180,7 @@ struct DataContentView: View {
                 alertMessage = error
             }
         }
-        .onChange(of: manager.error) { _, newValue in
+        .onChange(of: manager.error) { newValue in
             if let newValue {
                 alertMessage = newValue
             } else {
