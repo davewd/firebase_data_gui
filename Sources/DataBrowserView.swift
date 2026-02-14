@@ -105,6 +105,10 @@ struct DataBrowserView: View {
 
 struct AuthInfoView: View {
     let info: String
+    private enum Layout {
+        static let minSheetWidth: CGFloat = 520
+        static let minSheetHeight: CGFloat = 420
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -131,7 +135,7 @@ struct AuthInfoView: View {
             }
         }
         .padding(24)
-        .frame(minWidth: 520, minHeight: 420)
+        .frame(minWidth: Layout.minSheetWidth, minHeight: Layout.minSheetHeight)
     }
 }
 

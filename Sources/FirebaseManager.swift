@@ -205,7 +205,7 @@ class FirebaseManager: ObservableObject {
             return "Service account not loaded."
         }
         let providedDatabaseURL = serviceAccount.databaseURL?.trimmingCharacters(in: Self.trimmedCharacters)
-        let providedDatabaseURLDisplay = providedDatabaseURL?.isEmpty == false ? providedDatabaseURL! : "(not provided)"
+        let providedDatabaseURLDisplay = (providedDatabaseURL?.isEmpty == false ? providedDatabaseURL : nil) ?? "(not provided)"
         let resolvedDatabaseURL = databaseURL.isEmpty ? "(unknown)" : databaseURL
         let issuedAt = Int(Date().timeIntervalSince1970)
         let expiration = issuedAt + Self.jwtExpirationSeconds
