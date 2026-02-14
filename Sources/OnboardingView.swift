@@ -95,6 +95,11 @@ struct OnboardingView: View {
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(nsColor: .windowBackgroundColor))
+        .onAppear {
+            if errorMessage == nil, let cachedError = appState.cachedAuthenticationError {
+                errorMessage = cachedError
+            }
+        }
     }
     
     private func handleDrop(providers: [NSItemProvider]) {
@@ -182,6 +187,7 @@ struct OnboardingView: View {
                 Self.logger.info("Firebase manager initialized for \(clientEmail, privacy: .private).")
                 appState.firebaseManager = manager
                 appState.isAuthenticated = true
+                appState.cacheServiceAccount(serviceAccount)
             } catch {
                 Self.logger.error("Firebase manager initialization failed. \(error.localizedDescription, privacy: .public)")
                 errorMessage = ErrorReporter.userMessage(
