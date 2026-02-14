@@ -4,6 +4,7 @@ struct DataBrowserView: View {
     @EnvironmentObject var appState: AppState
     @State private var selectedPath: String = "/"
     @State private var navigationStack: [String] = ["/"]
+    @State private var isAuthInfoPresented = false
     
     var body: some View {
         NavigationSplitView {
@@ -16,6 +17,14 @@ struct DataBrowserView: View {
                     Text("Firebase Data")
                         .font(.headline)
                     Spacer()
+                    Button(action: {
+                        isAuthInfoPresented = true
+                    }) {
+                        Image(systemName: "info.circle")
+                    }
+                    .buttonStyle(.plain)
+                    .help("Authentication details")
+                    .disabled(appState.firebaseManager == nil)
                     Button(action: {
                         appState.isAuthenticated = false
                         appState.firebaseManager = nil
@@ -83,11 +92,50 @@ struct DataBrowserView: View {
         .task {
             await appState.firebaseManager?.fetchRootData()
         }
+        .sheet(isPresented: $isAuthInfoPresented) {
+            AuthInfoView(info: appState.firebaseManager?.authenticationSummary() ?? "Service account not loaded.")
+        }
     }
     
     private func navigateTo(index: Int) {
         navigationStack = Array(navigationStack.prefix(index + 1))
         selectedPath = navigationStack.last ?? "/"
+    }
+}
+
+struct AuthInfoView: View {
+    let info: String
+    private enum Layout {
+        static let minSheetWidth: CGFloat = 520
+        static let minSheetHeight: CGFloat = 420
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Authentication Details")
+                .font(.title2)
+            Text("Use these values to reproduce the app's authentication flow in another client. Private keys and access tokens are not displayed.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            ScrollView {
+                Text(info)
+                    .font(.system(.body, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            HStack {
+                Button(action: {
+                    copyTextToClipboard(info)
+                }) {
+                    Label("Copy Details", systemImage: "doc.on.doc")
+                        .font(.caption)
+                }
+                .buttonStyle(.bordered)
+                Spacer()
+            }
+        }
+        .padding(24)
+        .frame(minWidth: Layout.minSheetWidth, minHeight: Layout.minSheetHeight)
     }
 }
 

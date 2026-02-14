@@ -13,6 +13,7 @@ class FirebaseManager: ObservableObject {
     private static let unknownStatusCode = -1
     private static let tokenEndpoint = "https://oauth2.googleapis.com/token"
     private static let tokenScope = "https://www.googleapis.com/auth/firebase.database https://www.googleapis.com/auth/userinfo.email"
+    private static let tokenGrantType = "urn:ietf:params:oauth:grant-type:jwt-bearer"
     private static let tokenExpiryBufferSeconds: TimeInterval = 60
     private static let jwtExpirationSeconds = 3600
     private static let privateKeyPreviewLimit = 240
@@ -199,6 +200,34 @@ class FirebaseManager: ObservableObject {
         }
     }
 
+    func authenticationSummary() -> String {
+        guard let serviceAccount else {
+            return "Service account not loaded."
+        }
+        let providedDatabaseURL = serviceAccount.databaseURL?.trimmingCharacters(in: Self.trimmedCharacters)
+        let providedDatabaseURLDisplay = (providedDatabaseURL?.isEmpty == false ? providedDatabaseURL : nil) ?? "(not provided)"
+        let resolvedDatabaseURL = databaseURL.isEmpty ? "(unknown)" : databaseURL
+        let issuedAt = Int(Date().timeIntervalSince1970)
+        let expiration = issuedAt + Self.jwtExpirationSeconds
+        return """
+        Firebase Authentication Details
+        Project ID: \(serviceAccount.projectId)
+        Client Email: \(serviceAccount.clientEmail)
+        Database URL (provided): \(providedDatabaseURLDisplay)
+        Database URL (resolved): \(resolvedDatabaseURL)
+        OAuth Token Endpoint: \(Self.tokenEndpoint)
+        OAuth Grant Type: \(Self.tokenGrantType)
+        OAuth Scope: \(Self.tokenScope)
+        JWT Issuer (iss): \(serviceAccount.clientEmail)
+        JWT Audience (aud): \(Self.tokenEndpoint)
+        JWT Issued At (iat): \(issuedAt)
+        JWT Expiration (exp): \(expiration)
+        JWT Lifetime (seconds): \(Self.jwtExpirationSeconds)
+        Authorization Header: Bearer <ACCESS_TOKEN>
+        Content-Type: application/x-www-form-urlencoded
+        """
+    }
+
     private func accessToken() async throws -> String {
         if let cachedToken, cachedToken.expiry > Date().addingTimeInterval(Self.tokenExpiryBufferSeconds) {
             Self.logger.info("Using cached OAuth token. Expires at \(cachedToken.expiry, privacy: .private).")
@@ -213,7 +242,7 @@ class FirebaseManager: ObservableObject {
         Self.logger.info("JWT generated. Preparing token request.")
         var components = URLComponents()
         components.queryItems = [
-            URLQueryItem(name: "grant_type", value: "urn:ietf:params:oauth:grant-type:jwt-bearer"),
+            URLQueryItem(name: "grant_type", value: Self.tokenGrantType),
             URLQueryItem(name: "assertion", value: jwt)
         ]
         guard let body = components.percentEncodedQuery?.data(using: .utf8),

@@ -117,6 +117,10 @@ Use the **Error ID** to correlate the UI message with logs for deeper troublesho
 
 If you file an issue, include the entire error message block shown in the UI (Error ID, Type, Resolution, and Details).
 
+### Authentication Request Details
+
+Once connected, click the **info** button in the sidebar header to view and copy the exact authentication details the app uses (database URL, token endpoint, scope, grant type, and JWT claims). This helps you reproduce the same request in tools like Python for debugging connectivity.
+
 ## Project Structure
 
 ```
