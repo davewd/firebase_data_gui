@@ -200,7 +200,9 @@ struct DataContentView: View {
             Button("Copy Error") {
                 copyTextToClipboard(message)
             }
-            Button("Dismiss", role: .cancel) {}
+            Button("Dismiss", role: .cancel) {
+                alertMessage = nil
+            }
         } message: { message in
             Text(message)
         }

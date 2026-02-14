@@ -33,28 +33,35 @@ private enum DockIcon {
     }
 
     private static func loadImage() -> NSImage? {
-        guard let url = Bundle.module.url(forResource: resourceName, withExtension: "png") else {
+        guard let url = resourceBundle.url(forResource: resourceName, withExtension: "png") else {
             return nil
         }
         return NSImage(contentsOf: url)
     }
 
     private static func makeImage() -> NSImage {
-        let image = NSImage(size: iconSize)
-        image.lockFocus()
-        defer { image.unlockFocus() }
-        let font = NSFont.systemFont(ofSize: iconSize.width * 0.78)
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: font
-        ]
-        let emojiString = emoji as NSString
-        let emojiSize = emojiString.size(withAttributes: attributes)
-        let origin = CGPoint(
-            x: (iconSize.width - emojiSize.width) / 2,
-            y: (iconSize.height - emojiSize.height) / 2
-        )
-        emojiString.draw(at: origin, withAttributes: attributes)
-        return image
+        NSImage(size: iconSize, flipped: false) { _ in
+            let font = NSFont.systemFont(ofSize: iconSize.width * 0.78)
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: font
+            ]
+            let emojiString = emoji as NSString
+            let emojiSize = emojiString.size(withAttributes: attributes)
+            let origin = CGPoint(
+                x: (iconSize.width - emojiSize.width) / 2,
+                y: (iconSize.height - emojiSize.height) / 2
+            )
+            emojiString.draw(at: origin, withAttributes: attributes)
+            return true
+        }
+    }
+
+    private static var resourceBundle: Bundle {
+        #if SWIFT_PACKAGE
+        return .module
+        #else
+        return .main
+        #endif
     }
 }
 
