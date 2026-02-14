@@ -20,6 +20,7 @@ struct FirebaseDataGUIApp: App {
 class AppState: ObservableObject {
     @Published var isAuthenticated = false
     @Published var firebaseManager: FirebaseManager?
+    @Published var cachedAuthenticationError: String?
     private static let keychainService = "FirebaseDataGUI"
     private static let keychainAccount = "serviceAccount"
     private static let logger = Logger(subsystem: "FirebaseDataGUI", category: "Authentication")
@@ -32,6 +33,7 @@ class AppState: ObservableObject {
         do {
             let data = try JSONEncoder().encode(serviceAccount)
             try saveServiceAccountData(data)
+            cachedAuthenticationError = nil
             Self.logger.info("Cached service account in Keychain.")
         } catch {
             Self.logger.error("Failed to cache service account. \(error.localizedDescription, privacy: .public)")
@@ -46,16 +48,27 @@ class AppState: ObservableObject {
             try manager.initialize(with: serviceAccount)
             firebaseManager = manager
             isAuthenticated = true
+            cachedAuthenticationError = nil
             Self.logger.info("Loaded cached service account from Keychain.")
         } catch {
-            Self.logger.error("Failed to load cached service account. \(error.localizedDescription, privacy: .public)")
             clearCachedServiceAccount()
+            Self.logger.error("Failed to load cached service account. \(error.localizedDescription, privacy: .public)")
+            cachedAuthenticationError = ErrorReporter.userMessage(
+                errorType: "Cached Credentials Unavailable",
+                resolution: "The saved service account could not be loaded or validated. Select your Firebase service account JSON key again.",
+                underlying: error
+            )
+            firebaseManager = nil
+            isAuthenticated = false
         }
     }
 
     private func clearCachedServiceAccount() {
         let query = keychainQuery()
-        SecItemDelete(query as CFDictionary)
+        let status = SecItemDelete(query as CFDictionary)
+        if status != errSecSuccess && status != errSecItemNotFound {
+            Self.logger.error("Failed to clear cached service account during error recovery. OSStatus \(status, privacy: .public)")
+        }
     }
 
     private func keychainQuery() -> [String: Any] {
@@ -68,9 +81,16 @@ class AppState: ObservableObject {
 
     private func saveServiceAccountData(_ data: Data) throws {
         var query = keychainQuery()
-        SecItemDelete(query as CFDictionary)
+        let deleteStatus = SecItemDelete(query as CFDictionary)
+        if deleteStatus != errSecSuccess && deleteStatus != errSecItemNotFound {
+            throw NSError(
+                domain: "FirebaseDataGUI",
+                code: Int(deleteStatus),
+                userInfo: [NSLocalizedDescriptionKey: "Keychain delete failed with status \(deleteStatus)."]
+            )
+        }
         query[kSecValueData as String] = data
-        query[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess else {
             throw NSError(

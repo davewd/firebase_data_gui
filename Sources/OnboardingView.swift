@@ -95,6 +95,11 @@ struct OnboardingView: View {
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(nsColor: .windowBackgroundColor))
+        .onAppear {
+            if errorMessage == nil, let cachedError = appState.cachedAuthenticationError {
+                errorMessage = cachedError
+            }
+        }
     }
     
     private func handleDrop(providers: [NSItemProvider]) {
