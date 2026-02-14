@@ -183,8 +183,6 @@ struct DataContentView: View {
         .onChange(of: manager.error) { newValue in
             if let newValue {
                 alertMessage = newValue
-            } else {
-                alertMessage = nil
             }
         }
         .alert(
