@@ -17,7 +17,8 @@ let package = Package(
             name: "FirebaseDataGUI",
             dependencies: [],
             path: "Sources",
-            exclude: ["Info.plist"]
+            exclude: ["Info.plist"],
+            resources: [.process("Resources")]
         )
     ]
 )

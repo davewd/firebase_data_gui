@@ -189,8 +189,6 @@ struct DataContentView: View {
         .onChange(of: manager.error) { newValue in
             if let newValue {
                 alertMessage = newValue
-            } else {
-                alertMessage = nil
             }
         }
         .alert(
@@ -208,7 +206,9 @@ struct DataContentView: View {
             Button("Copy Error") {
                 copyTextToClipboard(message)
             }
-            Button("Dismiss", role: .cancel) {}
+            Button("Dismiss", role: .cancel) {
+                alertMessage = nil
+            }
         } message: { message in
             Text(message)
         }
