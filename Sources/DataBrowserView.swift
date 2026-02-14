@@ -142,6 +142,7 @@ struct AuthInfoView: View {
 struct DataContentView: View {
     @ObservedObject var manager: FirebaseManager
     let currentPath: String
+    @State private var alertMessage: String?
     
     var body: some View {
         Group {
@@ -154,26 +155,6 @@ struct DataContentView: View {
                     Text("Loading data...")
                         .foregroundColor(.secondary)
                         .padding(.top)
-                    Spacer()
-                }
-            } else if let error = manager.error {
-                VStack(spacing: 12) {
-                    Spacer()
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 40))
-                        .foregroundColor(.red)
-                    Text(error)
-                        .foregroundColor(.red)
-                        .multilineTextAlignment(.leading)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding()
-                    Button(action: {
-                        copyTextToClipboard(error)
-                    }) {
-                        Label("Copy Error", systemImage: "doc.on.doc")
-                            .font(.caption)
-                    }
-                    .buttonStyle(.bordered)
                     Spacer()
                 }
             } else {
@@ -194,6 +175,37 @@ struct DataContentView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear {
+            if let error = manager.error {
+                alertMessage = error
+            }
+        }
+        .onChange(of: manager.error) { _, newValue in
+            if let newValue {
+                alertMessage = newValue
+            } else {
+                alertMessage = nil
+            }
+        }
+        .alert(
+            "Error",
+            isPresented: Binding(
+                get: { alertMessage != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        alertMessage = nil
+                    }
+                }
+            ),
+            presenting: alertMessage
+        ) { message in
+            Button("Copy Error") {
+                copyTextToClipboard(message)
+            }
+            Button("Dismiss", role: .cancel) {}
+        } message: { message in
+            Text(message)
+        }
     }
 }
 
