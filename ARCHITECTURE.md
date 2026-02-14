@@ -187,9 +187,7 @@ The app uses Firebase's REST API:
 - `limitToFirst=5` - Limit results to first 5 entries
 
 **Authentication:**
-Currently uses public read access. Future versions could implement:
-- OAuth 2.0 token generation from service account
-- Custom authentication tokens
+Uses OAuth 2.0 access tokens derived from the service account key, attached to each REST request.
 
 ## UI/UX Design Principles
 

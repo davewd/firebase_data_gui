@@ -20,7 +20,7 @@ struct OnboardingView: View {
                 .font(.title3)
                 .foregroundColor(.secondary)
             
-            Text("Note: Your database must allow public read access")
+            Text("Note: Your service account key is used for private reads")
                 .font(.caption)
                 .foregroundColor(.orange)
                 .padding(.top, 4)
