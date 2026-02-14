@@ -105,6 +105,7 @@ struct DataBrowserView: View {
 
 struct AuthInfoView: View {
     let info: String
+    @Environment(\.dismiss) private var dismiss
     private enum Layout {
         static let minSheetWidth: CGFloat = 520
         static let minSheetHeight: CGFloat = 420
@@ -132,6 +133,11 @@ struct AuthInfoView: View {
                 }
                 .buttonStyle(.bordered)
                 Spacer()
+                Button("Close", role: .cancel) {
+                    dismiss()
+                }
+                .buttonStyle(.bordered)
+                .keyboardShortcut(.cancelAction)
             }
         }
         .padding(24)
