@@ -10,6 +10,13 @@ struct ErrorReporter {
         return formatter
     }()
     private static let formatterQueue = DispatchQueue(label: "FirebaseDataGUI.ErrorReporter.DateFormatter")
+    private static let commandLineQueue = DispatchQueue(label: "FirebaseDataGUI.ErrorReporter.CommandLine")
+
+    static func logError(_ message: String, logger: Logger? = nil) {
+        let targetLogger = logger ?? self.logger
+        targetLogger.error("\(message, privacy: .public)")
+        printToCommandLine(message)
+    }
     
     static func userMessage(
         errorType: String,
@@ -31,9 +38,8 @@ struct ErrorReporter {
         }
         let detailText = detailParts.isEmpty ? "No additional details are available." : detailParts.joined(separator: "; ")
         
-        logger.error(
-            "ErrorID: \(errorId, privacy: .public) | Type: \(errorType, privacy: .public) | Resolution: \(resolution, privacy: .public) | Details: \(detailText, privacy: .public)"
-        )
+        let logMessage = "ErrorID: \(errorId) | Type: \(errorType) | Resolution: \(resolution) | Details: \(detailText)"
+        logError(logMessage)
         
         return """
         Error ID: \(errorId)
@@ -41,5 +47,12 @@ struct ErrorReporter {
         Resolution: \(resolution)
         Details: \(detailText)
         """
+    }
+
+    private static func printToCommandLine(_ message: String) {
+        let data = Data((message + "\n").utf8)
+        commandLineQueue.async {
+            FileHandle.standardError.write(data)
+        }
     }
 }

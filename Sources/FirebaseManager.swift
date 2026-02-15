@@ -75,7 +75,10 @@ class FirebaseManager: ObservableObject {
         ]
         let missingFields = requiredFields.filter { $0.1.isEmpty }.map { $0.0 }
         if !missingFields.isEmpty {
-            Self.logger.error("Service account validation failed. Missing fields: \(missingFields.joined(separator: ", "), privacy: .public)")
+            ErrorReporter.logError(
+                "Service account validation failed. Missing fields: \(missingFields.joined(separator: ", "))",
+                logger: Self.logger
+            )
             throw NSError(
                 domain: "FirebaseDataGUI",
                 code: 1,
@@ -259,7 +262,10 @@ class FirebaseManager: ObservableObject {
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             let statusCode = (response as? HTTPURLResponse)?.statusCode ?? Self.unknownStatusCode
-            Self.logger.error("Token request failed with HTTP status \(statusCode, privacy: .public).")
+            ErrorReporter.logError(
+                "Token request failed with HTTP status \(statusCode).",
+                logger: Self.logger
+            )
             throw NSError(
                 domain: "FirebaseDataGUI",
                 code: ErrorCode.tokenRequest.rawValue,

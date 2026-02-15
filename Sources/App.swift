@@ -84,7 +84,10 @@ class AppState: ObservableObject {
             cachedAuthenticationError = nil
             Self.logger.info("Cached service account in Keychain.")
         } catch {
-            Self.logger.error("Failed to cache service account. \(error.localizedDescription, privacy: .public)")
+            ErrorReporter.logError(
+                "Failed to cache service account. \(error.localizedDescription)",
+                logger: Self.logger
+            )
         }
     }
 
@@ -100,7 +103,10 @@ class AppState: ObservableObject {
             Self.logger.info("Loaded cached service account from Keychain.")
         } catch {
             clearCachedServiceAccount()
-            Self.logger.error("Failed to load cached service account. \(error.localizedDescription, privacy: .public)")
+            ErrorReporter.logError(
+                "Failed to load cached service account. \(error.localizedDescription)",
+                logger: Self.logger
+            )
             cachedAuthenticationError = ErrorReporter.userMessage(
                 errorType: "Cached Credentials Unavailable",
                 resolution: "The saved service account could not be loaded or validated. Select your Firebase service account JSON key again.",
@@ -115,7 +121,10 @@ class AppState: ObservableObject {
         let query = keychainQuery()
         let status = SecItemDelete(query as CFDictionary)
         if status != errSecSuccess && status != errSecItemNotFound {
-            Self.logger.error("Failed to clear cached service account during error recovery. OSStatus \(status, privacy: .public)")
+            ErrorReporter.logError(
+                "Failed to clear cached service account during error recovery. OSStatus \(status)",
+                logger: Self.logger
+            )
         }
     }
 
