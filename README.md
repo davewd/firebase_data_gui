@@ -111,6 +111,7 @@ Use the **Error ID** to correlate the UI message with logs for deeper troublesho
 ### Viewing Detailed Logs
 
 - **From Xcode**: Run the app and open the Debug area (⇧⌘Y) to see log output.
+- **From the command line**: If you launch the app binary directly (e.g., `.build/release/FirebaseDataGUI`), error messages are printed to standard error.
 - **From the built app**: Open **Console.app** on macOS and search for `subsystem:FirebaseDataGUI AND category:Errors`.
   - Console.app predicate searches are case-sensitive; ensure `subsystem:FirebaseDataGUI` and `category:Errors` match exactly.
 - **Authentication flow logs**: Use `subsystem:FirebaseDataGUI AND category:Authentication` to see step-by-step service account validation and token exchange messages.
