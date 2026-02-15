@@ -13,8 +13,8 @@ struct ErrorReporter {
     private static let commandLineQueue = DispatchQueue(label: "FirebaseDataGUI.ErrorReporter.CommandLine")
 
     static func logError(_ message: String, logger: Logger? = nil) {
-        let activeLogger = logger ?? self.logger
-        activeLogger.error("\(message, privacy: .public)")
+        let targetLogger = logger ?? self.logger
+        targetLogger.error("\(message, privacy: .public)")
         printToCommandLine(message)
     }
     
@@ -51,7 +51,7 @@ struct ErrorReporter {
 
     private static func printToCommandLine(_ message: String) {
         let data = Data((message + "\n").utf8)
-        commandLineQueue.sync {
+        commandLineQueue.async {
             FileHandle.standardError.write(data)
         }
     }
