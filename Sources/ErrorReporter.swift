@@ -10,6 +10,7 @@ struct ErrorReporter {
         return formatter
     }()
     private static let formatterQueue = DispatchQueue(label: "FirebaseDataGUI.ErrorReporter.DateFormatter")
+    private static let commandLineQueue = DispatchQueue(label: "FirebaseDataGUI.ErrorReporter.CommandLine")
 
     static func logError(_ message: String, logger: Logger? = nil) {
         let activeLogger = logger ?? self.logger
@@ -49,7 +50,9 @@ struct ErrorReporter {
     }
 
     private static func printToCommandLine(_ message: String) {
-        guard let data = (message + "\n").data(using: .utf8) else { return }
-        FileHandle.standardError.write(data)
+        let data = Data((message + "\n").utf8)
+        commandLineQueue.sync {
+            FileHandle.standardError.write(data)
+        }
     }
 }
