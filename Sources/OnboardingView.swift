@@ -20,10 +20,18 @@ struct OnboardingView: View {
                 .font(.title3)
                 .foregroundColor(.secondary)
             
-            Text("Note: Your service account key is used for private reads")
-                .font(.caption)
-                .foregroundColor(.orange)
-                .padding(.top, 4)
+            VStack(spacing: 4) {
+                Text("Note: Your service account key is used for private reads")
+                    .font(.caption)
+                    .foregroundColor(.orange)
+
+                Text("Stored securely in your macOS Keychain. When prompted, choose Always Allow.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 4)
+            .accessibilityElement(children: .combine)
             
             // Drop zone
             ZStack {
