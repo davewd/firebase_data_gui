@@ -36,12 +36,14 @@ class FirebaseManager: ObservableObject {
         let privateKey: String
         let clientEmail: String
         let databaseURL: String?
+        let databaseRegion: String?
         
         enum CodingKeys: String, CodingKey {
             case projectId = "project_id"
             case privateKey = "private_key"
             case clientEmail = "client_email"
             case databaseURL = "database_url"
+            case databaseRegion = "database_region"
         }
     }
 
@@ -91,11 +93,18 @@ class FirebaseManager: ObservableObject {
     }
     
     private var databaseURL: String {
-        if let url = serviceAccount?.databaseURL, !url.isEmpty {
+        if let url = serviceAccount?.databaseURL?
+            .trimmingCharacters(in: Self.trimmedCharacters),
+           !url.isEmpty {
             return url
         }
         // Default database URL format
         if let projectId = serviceAccount?.projectId {
+            if let region = serviceAccount?.databaseRegion?
+                .trimmingCharacters(in: Self.trimmedCharacters),
+               !region.isEmpty {
+                return "https://\(projectId)-default-rtdb.\(region).firebasedatabase.app"
+            }
             return "https://\(projectId)-default-rtdb.firebaseio.com"
         }
         return ""
@@ -209,6 +218,8 @@ class FirebaseManager: ObservableObject {
         }
         let providedDatabaseURL = serviceAccount.databaseURL?.trimmingCharacters(in: Self.trimmedCharacters)
         let providedDatabaseURLDisplay = (providedDatabaseURL?.isEmpty == false ? providedDatabaseURL : nil) ?? "(not provided)"
+        let providedDatabaseRegion = serviceAccount.databaseRegion?.trimmingCharacters(in: Self.trimmedCharacters)
+        let providedDatabaseRegionDisplay = (providedDatabaseRegion?.isEmpty == false ? providedDatabaseRegion : nil) ?? "(not provided)"
         let resolvedDatabaseURL = databaseURL.isEmpty ? "(unknown)" : databaseURL
         let issuedAt = Int(Date().timeIntervalSince1970)
         let expiration = issuedAt + Self.jwtExpirationSeconds
@@ -217,6 +228,7 @@ class FirebaseManager: ObservableObject {
         Project ID: \(serviceAccount.projectId)
         Client Email: \(serviceAccount.clientEmail)
         Database URL (provided): \(providedDatabaseURLDisplay)
+        Database Region (provided): \(providedDatabaseRegionDisplay)
         Database URL (resolved): \(resolvedDatabaseURL)
         OAuth Token Endpoint: \(Self.tokenEndpoint)
         OAuth Grant Type: \(Self.tokenGrantType)
@@ -514,7 +526,7 @@ class FirebaseManager: ObservableObject {
         }
         return ErrorReporter.userMessage(
             errorType: "Database Fetch Failed",
-            resolution: "Confirm your database URL is correct and the service account has read access.",
+            resolution: "Confirm your database URL is correct (include a regional suffix if needed) and the service account has read access.",
             underlying: error
         )
     }
