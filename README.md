@@ -178,7 +178,7 @@ For the app to work, your Firebase Realtime Database needs read access configure
 ### "Failed to fetch data"
 - Check your internet connection
 - Verify your Firebase Realtime Database rules allow authenticated reads
-- Ensure your database URL is correct (default: `https://PROJECT_ID-default-rtdb.firebaseio.com`)
+- Ensure your database URL is correct (default: `https://PROJECT_ID-default-rtdb.firebaseio.com`, regional: `https://PROJECT_ID-default-rtdb.REGION.firebasedatabase.app`)
 
 ### No data showing
 - Your database might be empty

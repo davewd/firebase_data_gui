@@ -24,16 +24,20 @@ The JSON file must contain the following fields:
 
 ## Optional Fields
 
-The app also supports an optional `database_url` field:
+The app also supports optional `database_url` and `database_region` fields:
 
 ```json
 {
   "database_url": "https://your-project-id-default-rtdb.firebaseio.com",
+  "database_region": "asia-southeast1",
   ...other fields...
 }
 ```
 
-If not provided, the database URL will be constructed automatically as:
+If `database_url` is not provided but `database_region` is, the database URL will be constructed as:
+`https://{project_id}-default-rtdb.{database_region}.firebasedatabase.app`
+
+If neither field is provided, the database URL will be constructed automatically as:
 `https://{project_id}-default-rtdb.firebaseio.com`
 
 ## Security Notes

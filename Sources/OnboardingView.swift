@@ -178,12 +178,16 @@ struct OnboardingView: View {
             let databaseURL = (json["database_url"] as? String)?
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             let normalizedDatabaseURL = databaseURL?.isEmpty == false ? databaseURL : nil
+            let databaseRegion = (json["database_region"] as? String)?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let normalizedDatabaseRegion = databaseRegion?.isEmpty == false ? databaseRegion : nil
             Self.logger.info("Initializing Firebase manager for project \(projectId, privacy: .public).")
             let serviceAccount = FirebaseManager.ServiceAccount(
                 projectId: projectId,
                 privateKey: privateKey,
                 clientEmail: clientEmail,
-                databaseURL: normalizedDatabaseURL
+                databaseURL: normalizedDatabaseURL,
+                databaseRegion: normalizedDatabaseRegion
             )
             do {
                 try manager.initialize(with: serviceAccount)
