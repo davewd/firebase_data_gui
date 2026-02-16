@@ -67,7 +67,8 @@ swift build
    - **Drag and drop** your Firebase service account JSON key file onto the drop zone
    - **Click** the drop zone to select the file manually
 3. The app will automatically connect to your Firebase Realtime Database
-4. Browse your data:
+4. The app does not persist your service account key to avoid macOS Keychain prompts, so you will need to select it each time you launch
+5. Browse your data:
    - Expand nested objects by clicking the chevron icons
    - View different data types with color-coded syntax
    - Navigate through your database structure
