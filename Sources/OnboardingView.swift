@@ -190,7 +190,6 @@ struct OnboardingView: View {
                 Self.logger.info("Firebase manager initialized for \(clientEmail, privacy: .private).")
                 appState.firebaseManager = manager
                 appState.isAuthenticated = true
-                appState.cacheServiceAccount(serviceAccount)
             } catch {
                 ErrorReporter.logError(
                     "Firebase manager initialization failed. \(error.localizedDescription)",

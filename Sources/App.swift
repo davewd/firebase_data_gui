@@ -1,8 +1,6 @@
 import SwiftUI
 import AppKit
 import Foundation
-import os
-
 @main
 struct FirebaseDataGUIApp: App {
     @StateObject private var appState = AppState()
@@ -68,10 +66,4 @@ class AppState: ObservableObject {
     @Published var isAuthenticated = false
     @Published var firebaseManager: FirebaseManager?
     @Published var cachedAuthenticationError: String?
-    private static let logger = Logger(subsystem: "FirebaseDataGUI", category: "Authentication")
-
-    func cacheServiceAccount(_ _: FirebaseManager.ServiceAccount) {
-        cachedAuthenticationError = nil
-        Self.logger.info("Service account caching disabled to avoid Keychain prompts.")
-    }
 }
