@@ -67,7 +67,8 @@ swift build
    - **Drag and drop** your Firebase service account JSON key file onto the drop zone
    - **Click** the drop zone to select the file manually
 3. The app will automatically connect to your Firebase Realtime Database
-4. Browse your data:
+4. The app stores your service account key in your macOS Keychain; when macOS prompts for access, choose **Always Allow** to avoid repeated requests.
+5. Browse your data:
    - Expand nested objects by clicking the chevron icons
    - View different data types with color-coded syntax
    - Navigate through your database structure
@@ -151,7 +152,7 @@ firebase_data_gui/
 - Service account keys provide full access to your Firebase project
 - Never commit service account keys to version control
 - Store keys securely and never share them
-- The app does not store or transmit your keys anywhere
+- The app stores your service account key in your macOS Keychain on this machine
 - Keys are only used locally to authenticate with Firebase
 
 ## Firebase Security Rules
