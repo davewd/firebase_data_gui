@@ -24,6 +24,11 @@ struct OnboardingView: View {
                 .font(.caption)
                 .foregroundColor(.orange)
                 .padding(.top, 4)
+
+            Text("Stored securely in your macOS Keychain. When prompted, choose Always Allow.")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
             
             // Drop zone
             ZStack {
@@ -194,6 +199,7 @@ struct OnboardingView: View {
                 Self.logger.info("Firebase manager initialized for \(clientEmail, privacy: .private).")
                 appState.firebaseManager = manager
                 appState.isAuthenticated = true
+                appState.cacheServiceAccount(serviceAccount)
             } catch {
                 ErrorReporter.logError(
                     "Firebase manager initialization failed. \(error.localizedDescription)",
