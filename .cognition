@@ -1,0 +1,7 @@
+{
+  "cognition_group": "Cognition Infra",
+  "remote_url": "https://github.com/davewd/firebase_data_gui.git",
+  "deployment": {
+    "github_workflow_names": [""]
+  }
+}
