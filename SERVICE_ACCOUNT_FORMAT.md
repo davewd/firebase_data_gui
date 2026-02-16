@@ -28,11 +28,13 @@ The app also supports optional `database_url` and `database_region` fields:
 
 ```json
 {
-  "database_url": "https://your-project-id-default-rtdb.firebaseio.com",
+  "database_url": "https://your-project-id-default-rtdb.asia-southeast1.firebasedatabase.app",
   "database_region": "asia-southeast1",
   ...other fields...
 }
 ```
+
+For regional databases (for example `asia-southeast1`), add `database_region` to your JSON key file. If you already know the full endpoint, you can set `database_url` directly to a `.firebasedatabase.app` URL. The app's Authentication Details view shows the Database Region value from `database_region`.
 
 If `database_url` is not provided but `database_region` is, the database URL will be constructed as:
 `https://{project_id}-default-rtdb.{database_region}.firebasedatabase.app`
