@@ -29,6 +29,7 @@ struct OnboardingView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
+                .accessibilityLabel("Stored securely in your macOS Keychain. When prompted, choose Always Allow.")
             
             // Drop zone
             ZStack {
