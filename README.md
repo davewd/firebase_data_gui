@@ -178,7 +178,8 @@ For the app to work, your Firebase Realtime Database needs read access configure
 - Check your internet connection
 - Verify your Firebase Realtime Database rules allow authenticated reads
 - Ensure your database URL is correct (default: `https://PROJECT_ID-default-rtdb.firebaseio.com`, regional: `https://PROJECT_ID-default-rtdb.REGION.firebasedatabase.app`)
-- For regional databases, add `"database_region": "asia-southeast1"` to your service account JSON (or set `"database_url": "https://PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app"`) so the app can display the Database Region and connect to the correct endpoint
+- For regional databases, add `"database_region": "asia-southeast1"` to your service account JSON so the app can display the Database Region
+- Alternatively, set `"database_url": "https://PROJECT_ID-default-rtdb.asia-southeast1.firebasedatabase.app"` to connect directly to the regional endpoint
 
 ### No data showing
 - Your database might be empty
